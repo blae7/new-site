@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Loopcraft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent: #06D6A0;
+    --bg: #0A0A0F;
+    --panel: #131319;
+    --panel-2: #191922;
+    --line: #26262f;
+    --text: #ECEBF0;
+    --dim: #8A899A;
+    --kick: #FF6B6B;
+    --snare: #FFD166;
+    --hat: #06D6A0;
+    --clap: #C77DFF;
+    --bass: #4CC9F0;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    overscroll-behavior: none;
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  /* ---------- boot overlay ---------- */
+  .boot{
+    position:fixed; inset:0; z-index:100;
+    background: var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+    transition: opacity .6s ease;
+  }
+  .boot h1{ font-size: 1.8rem; margin:0; letter-spacing:-0.01em; }
+  .boot p{ color:var(--dim); font-size:0.8rem; letter-spacing:0.08em; text-transform:uppercase; }
+  .boot button{
+    font-family:'JetBrains Mono';
+    font-size:0.8rem; letter-spacing:0.1em; text-transform:uppercase;
+    background: var(--accent); color:#0A0A0F; font-weight:700;
+    border:none; border-radius:999px; padding:16px 34px; cursor:pointer;
+  }
+
+  .app{ max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex; flex-wrap:wrap; gap: 16px 28px;
+    align-items:center; justify-content:space-between;
+    padding: 14px 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    margin-bottom: 16px;
+  }
+  .brand h1{ margin:0; font-size:1.3rem; }
+  .brand .sub{ color:var(--dim); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; }
+  .transport{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  #playBtn{
+    width:52px; height:52px; border-radius:50%;
+    background: var(--accent); border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: transform .15s ease;
+  }
+  #playBtn:active{ transform: scale(0.92); }
+  #playBtn svg{ width:20px; height:20px; }
+  .knob-group{ display:flex; flex-direction:column; gap:3px; min-width:120px; }
+  .knob-group label{ font-size:0.65rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--dim); display:flex; justify-content:space-between; }
+  .knob-group input[type=range]{ width:100%; accent-color: var(--accent); }
+  canvas#viz{ height:52px; width:180px; border-radius:10px; background:#000; }
+
+  /* ---------- banks ---------- */
+  .banks{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+  .bank-btn{
+    font-family:'JetBrains Mono'; font-size:0.75rem; font-weight:700;
+    width:38px; height:38px; border-radius:10px;
+    background: var(--panel); border:1px solid var(--line); color:var(--dim);
+    cursor:pointer;
+  }
+  .bank-btn.active{ background: var(--accent); color:#0A0A0F; border-color:var(--accent); }
+  .toolbtn{
+    font-family:'JetBrains Mono'; font-size:0.68rem; letter-spacing:0.05em; text-transform:uppercase;
+    background: var(--panel); border:1px solid var(--line); color:var(--text);
+    border-radius: 999px; padding:9px 16px; cursor:pointer;
+  }
+  .toolbtn:active{ background: var(--panel-2); }
+  .spacer{ flex:1; }
+
+  /* ---------- tracks ---------- */
+  .track{
+    display:flex; align-items:center; gap:10px;
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .track-label{
+    width: 92px; flex-shrink:0;
+    font-size:0.82rem; font-weight:700;
+  }
+  .track-mini{ display:flex; flex-direction:column; gap:6px; width:64px; flex-shrink:0; }
+  .mini-btn{
+    font-size:0.6rem; font-family:'JetBrains Mono'; letter-spacing:0.05em;
+    border:1px solid var(--line); background:transparent; color:var(--dim);
+    border-radius:6px; padding:3px 0; cursor:pointer;
+  }
+  .mini-btn.on{ background: var(--tcolor); color:#0A0A0F; border-color: var(--tcolor); font-weight:700; }
+  .vol{ width:56px; flex-shrink:0; accent-color: var(--tcolor); }
+  .steps{ display:flex; gap:4px; overflow-x:auto; flex:1; padding: 2px; }
+  .step{
+    width:26px; height:34px; flex-shrink:0;
+    border-radius:6px; border:1px solid var(--line);
+    background: var(--panel-2);
+    cursor:pointer;
+  }
+  .step.beat{ border-color:#35353f; }
+  .step.on{ background: var(--tcolor); border-color: var(--tcolor); }
+  .step.playing{ box-shadow: 0 0 0 2px #fff inset; }
+  .rand-btn{
+    width:30px; height:30px; flex-shrink:0; border-radius:8px;
+    background:transparent; border:1px solid var(--line); color:var(--dim); cursor:pointer;
+    font-size:0.9rem;
+  }
+
+  footer{
+    margin-top:18px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    color:var(--dim); font-size:0.68rem;
+  }
+  .theme-picker{ display:flex; align-items:center; gap:8px; }
+  input[type=color]{
+    width:34px; height:34px; border:none; border-radius:50%; overflow:hidden; padding:0;
+    background:none; cursor:pointer;
+  }
+  #saveFlag{ opacity:0; transition:opacity .4s ease; color:var(--accent); }
+  #saveFlag.show{ opacity:1; }
+  #fileImport{ display:none; }
+</style>
+</head>
+<body>
+
+<div class="boot" id="boot">
+  <h1>Loopcraft</h1>
+  <p>A synthesized step-sequencer &mdash; tap to enable audio</p>
+  <button id="startBtn">Start Session</button>
+</div>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>Loopcraft</h1>
+      <div class="sub">Live-synthesized drum machine</div>
+    </div>
+    <div class="transport">
+      <button id="playBtn" aria-label="Play/Stop">
+        <svg id="playIcon" viewBox="0 0 24 24" fill="#0A0A0F"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="knob-group">
+        <label>Tempo <span id="bpmVal" class="mono">128</span></label>
+        <input type="range" id="bpm" min="60" max="190" value="128">
+      </div>
+      <div class="knob-group">
+        <label>Swing <span id="swingVal" class="mono">0%</span></label>
+        <input type="range" id="swing" min="0" max="60" value="0">
+      </div>
+      <canvas id="viz" width="360" height="104"></canvas>
+    </div>
+  </header>
+
+  <div class="banks">
+    <div class="mono" style="font-size:0.68rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;">Pattern</div>
+    <button class="bank-btn active" data-bank="A">A</button>
+    <button class="bank-btn" data-bank="B">B</button>
+    <button class="bank-btn" data-bank="C">C</button>
+    <button class="bank-btn" data-bank="D">D</button>
+    <div class="spacer"></div>
+    <button class="toolbtn" id="randAll">Randomize All</button>
+    <button class="toolbtn" id="clearAll">Clear</button>
+  </div>
+
+  <div id="tracks"></div>
+
+  <footer>
+    <div class="theme-picker">
+      <input type="color" id="themeColor" value="#06D6A0">
+      <span>Accent color</span>
+    </div>
+    <div class="spacer"></div>
+    <button class="toolbtn" id="exportBtn">Export .json</button>
+    <button class="toolbtn" id="importBtn">Import .json</button>
+    <input type="file" id="fileImport" accept="application/json">
+    <span id="saveFlag" class="mono">Saved ✓</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const TRACKS = [
+    { id:'kick',  name:'Kick',  color:'var(--kick)'  },
+    { id:'snare', name:'Snare', color:'var(--snare)' },
+    { id:'hat',   name:'Hat',   color:'var(--hat)'   },
+    { id:'clap',  name:'Clap',  color:'var(--clap)'  },
+    { id:'bass',  name:'Bass',  color:'var(--bass)'  }
+  ];
+  const STEPS = 16;
+  const STORAGE_KEY = 'loopcraft-state-v1';
+
+  let state = {
+    bpm: 128,
+    swing: 0,
+    theme: '#06D6A0',
+    currentBank: 'A',
+    banks: {},
+    volumes: {}, mutes: {}, solos: {}
+  };
+
+  function emptyPattern(){
+    const p = {};
+    TRACKS.forEach(t => p[t.id] = new Array(STEPS).fill(false));
+    return p;
+  }
+  function starterPattern(){
+    const p = emptyPattern();
+    [0,4,8,12].forEach(i => p.kick[i] = true);
+    [4,12].forEach(i => p.snare[i] = true);
+    [0,2,4,6,8,10,12,14].forEach(i => p.hat[i] = true);
+    [4,12].forEach(i => p.clap[i] = true);
+    [0,3,7,10].forEach(i => p.bass[i] = true);
+    return p;
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        state = Object.assign(state, parsed);
+        return;
+      }
+    }catch(e){}
+    ['A','B','C','D'].forEach(b => state.banks[b] = b === 'A' ? starterPattern() : emptyPattern());
+    TRACKS.forEach(t => { state.volumes[t.id] = 0.8; state.mutes[t.id] = false; state.solos[t.id] = false; });
+  }
+  let saveTimer;
+  function saveState(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const flag = document.getElementById('saveFlag');
+    flag.classList.add('show');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=> flag.classList.remove('show'), 900);
+  }
+  loadState();
+
+  // ---------------- UI: build track rows ----------------
+  const tracksEl = document.getElementById('tracks');
+  function renderTracks(){
+    tracksEl.innerHTML = '';
+    const pattern = state.banks[state.currentBank];
+    TRACKS.forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'track';
+      row.style.setProperty('--tcolor', t.color);
+
+      row.innerHTML = `
+        <div class="track-label">${t.name}</div>
+        <div class="track-mini">
+          <button class="mini-btn mute ${state.mutes[t.id]?'on':''}">MUTE</button>
+          <button class="mini-btn solo ${state.solos[t.id]?'on':''}">SOLO</button>
+          <input type="range" class="vol" min="0" max="1" step="0.01" value="${state.volumes[t.id]}">
+        </div>
+        <div class="steps"></div>
+        <button class="rand-btn" title="Randomize ${t.name}">🎲</button>
+      `;
+
+      const stepsEl = row.querySelector('.steps');
+      for(let i=0;i<STEPS;i++){
+        const s = document.createElement('button');
+        s.className = 'step' + (i%4===0 ? ' beat' : '') + (pattern[t.id][i] ? ' on' : '');
+        s.dataset.track = t.id;
+        s.dataset.step = i;
+        s.addEventListener('click', () => {
+          pattern[t.id][i] = !pattern[t.id][i];
+          s.classList.toggle('on', pattern[t.id][i]);
+          saveState();
+        });
+        stepsEl.appendChild(s);
+      }
+
+      row.querySelector('.mute').addEventListener('click', (e) => {
+        state.mutes[t.id] = !state.mutes[t.id];
+        e.target.classList.toggle('on', state.mutes[t.id]);
+        saveState();
+      });
+      row.querySelector('.solo').addEventListener('click', (e) => {
+        state.solos[t.id] = !state.solos[t.id];
+        e.target.classList.toggle('on', state.solos[t.id]);
+        saveState();
+      });
+      row.querySelector('.vol').addEventListener('input', (e) => {
+        state.volumes[t.id] = parseFloat(e.target.value);
+        saveState();
+      });
+      row.querySelector('.rand-btn').addEventListener('click', () => {
+        randomizeTrack(t.id);
+        renderTracks();
+        saveState();
+      });
+
+      tracksEl.appendChild(row);
+    });
+  }
+
+  function randomizeTrack(id){
+    const pattern = state.banks[state.currentBank];
+    const density = { kick:0.28, snare:0.2, hat:0.55, clap:0.15, bass:0.35 }[id] || 0.3;
+    for(let i=0;i<STEPS;i++){
+      pattern[id][i] = Math.random() < density;
+    }
+  }
+
+  document.getElementById('randAll').addEventListener('click', () => {
+    TRACKS.forEach(t => randomizeTrack(t.id));
+    renderTracks(); saveState();
+  });
+  document.getElementById('clearAll').addEventListener('click', () => {
+    state.banks[state.currentBank] = emptyPattern();
+    renderTracks(); saveState();
+  });
+
+  document.querySelectorAll('.bank-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.bank-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.currentBank = btn.dataset.bank;
+      if(!state.banks[state.currentBank]) state.banks[state.currentBank] = emptyPattern();
+      renderTracks(); saveState();
+    });
+  });
+
+  renderTracks();
+
+  // ---------------- theme ----------------
+  const themeInput = document.getElementById('themeColor');
+  themeInput.value = state.theme;
+  document.documentElement.style.setProperty('--accent', state.theme);
+  themeInput.addEventListener('input', (e) => {
+    state.theme = e.target.value;
+    document.documentElement.style.setProperty('--accent', state.theme);
+    saveState();
+  });
+
+  // ---------------- bpm / swing ----------------
+  const bpmSlider = document.getElementById('bpm');
+  const swingSlider = document.getElementById('swing');
+  bpmSlider.value = state.bpm;
+  swingSlider.value = state.swing;
+  document.getElementById('bpmVal').textContent = state.bpm;
+  document.getElementById('swingVal').textContent = state.swing + '%';
+  bpmSlider.addEventListener('input', e => {
+    state.bpm = parseInt(e.target.value);
+    document.getElementById('bpmVal').textContent = state.bpm;
+    saveState();
+  });
+  swingSlider.addEventListener('input', e => {
+    state.swing = parseInt(e.target.value);
+    document.getElementById('swingVal').textContent = state.swing + '%';
+    saveState();
+  });
+
+  // ---------------- export / import ----------------
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'loopcraft-pattern.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  const fileImport = document.getElementById('fileImport');
+  document.getElementById('importBtn').addEventListener('click', () => fileImport.click());
+  fileImport.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        state = Object.assign(state, parsed);
+        themeInput.value = state.theme;
+        document.documentElement.style.setProperty('--accent', state.theme);
+        bpmSlider.value = state.bpm; document.getElementById('bpmVal').textContent = state.bpm;
+        swingSlider.value = state.swing; document.getElementById('swingVal').textContent = state.swing + '%';
+        renderTracks(); saveState();
+      }catch(err){ alert('Could not read that file.'); }
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------------- Web Audio engine ----------------
+  let actx, master, analyser, noiseBuffer;
+  let isPlaying = false;
+  let currentStep = 0;
+  let nextNoteTime = 0;
+  let schedulerTimer = null;
+  const lookahead = 25;      // ms
+  const scheduleAheadTime = 0.12; // seconds
+
+  function initAudio(){
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    master = actx.createGain();
+    master.gain.value = 0.9;
+    analyser = actx.createAnalyser();
+    analyser.fftSize = 64;
+    master.connect(analyser);
+    analyser.connect(actx.destination);
+
+    const len = actx.sampleRate * 1.0;
+    noiseBuffer = actx.createBuffer(1, len, actx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for(let i=0;i<len;i++) data[i] = Math.random()*2-1;
+
+    drawViz();
+  }
+
+  function trackGain(id, time){
+    const solid = TRACKS.some(t => state.solos[t.id]);
+    const g = actx.createGain();
+    let vol = state.volumes[id];
+    if(state.mutes[id]) vol = 0;
+    if(solid && !state.solos[id]) vol = 0;
+    g.gain.setValueAtTime(vol, time);
+    g.connect(master);
+    return g;
+  }
+
+  function playKick(time){
+    const g = trackGain('kick', time);
+    const osc = actx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(150, time);
+    osc.frequency.exponentialRampToValueAtTime(40, time + 0.15);
+    const env = actx.createGain();
+    env.gain.setValueAtTime(1, time);
+    env.gain.exponentialRampToValueAtTime(0.001, time + 0.32);
+    osc.connect(env); env.connect(g);
+    osc.start(time); osc.stop(time + 0.35);
+  }
+  function playSnare(time){
+    const g = trackGain('snare', time);
+    const noise = actx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    const bp = actx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 1800;
+    const env = actx.createGain();
+    env.gain.setValueAtTime(1, time);
+    env.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
+    noise.connect(bp); bp.connect(env); env.connect(g);
+    noise.start(time); noise.stop(time + 0.2);
+
+    const osc = actx.createOscillator();
+    osc.type='triangle'; osc.frequency.value = 180;
+    const env2 = actx.createGain();
+    env2.gain.setValueAtTime(0.6, time);
+    env2.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+    osc.connect(env2); env2.connect(g);
+    osc.start(time); osc.stop(time+0.12);
+  }
+  function playHat(time){
+    const g = trackGain('hat', time);
+    const noise = actx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    const hp = actx.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 8000;
+    const env = actx.createGain();
+    env.gain.setValueAtTime(0.7, time);
+    env.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+    noise.connect(hp); hp.connect(env); env.connect(g);
+    noise.start(time); noise.stop(time + 0.06);
+  }
+  function playClap(time){
+    const g = trackGain('clap', time);
+    [0, 0.02, 0.04].forEach(off => {
+      const noise = actx.createBufferSource();
+      noise.buffer = noiseBuffer;
+      const bp = actx.createBiquadFilter();
+      bp.type='bandpass'; bp.frequency.value = 1500;
+      const env = actx.createGain();
+      env.gain.setValueAtTime(0.8, time+off);
+      env.gain.exponentialRampToValueAtTime(0.001, time+off+0.08);
+      noise.connect(bp); bp.connect(env); env.connect(g);
+      noise.start(time+off); noise.stop(time+off+0.09);
+    });
+  }
+  function playBass(time){
+    const g = trackGain('bass', time);
+    const osc = actx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(55, time);
+    const filt = actx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.setValueAtTime(1200, time);
+    filt.frequency.exponentialRampToValueAtTime(80, time + 0.25);
+    const env = actx.createGain();
+    env.gain.setValueAtTime(0.9, time);
+    env.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
+    osc.connect(filt); filt.connect(env); env.connect(g);
+    osc.start(time); osc.stop(time + 0.3);
+  }
+  const players = { kick:playKick, snare:playSnare, hat:playHat, clap:playClap, bass:playBass };
+
+  function scheduleStep(step, time){
+    const pattern = state.banks[state.currentBank];
+    TRACKS.forEach(t => {
+      if(pattern[t.id][step]) players[t.id](time);
+    });
+    scheduledSteps.push({ step, time });
+  }
+
+  let scheduledSteps = [];
+
+  function nextNote(){
+    const secondsPerBeat = 60.0 / state.bpm;
+    const secondsPer16th = secondsPerBeat / 4;
+    const swingOffset = (currentStep % 2 === 1) ? secondsPer16th * (state.swing/100) * 0.5 : 0;
+    nextNoteTime += secondsPer16th + swingOffset;
+    currentStep = (currentStep + 1) % STEPS;
+  }
+
+  function scheduler(){
+    while(nextNoteTime < actx.currentTime + scheduleAheadTime){
+      scheduleStep(currentStep, nextNoteTime);
+      nextNote();
+    }
+    schedulerTimer = setTimeout(scheduler, lookahead);
+  }
+
+  function updatePlayhead(){
+    const now = actx.currentTime;
+    while(scheduledSteps.length && scheduledSteps[0].time < now){
+      const s = scheduledSteps.shift();
+      document.querySelectorAll('.step.playing').forEach(el => el.classList.remove('playing'));
+      document.querySelectorAll(`.step[data-step="${s.step}"]`).forEach(el => el.classList.add('playing'));
+    }
+    requestAnimationFrame(updatePlayhead);
+  }
+
+  function startTransport(){
+    if(!actx) initAudio();
+    if(actx.state === 'suspended') actx.resume();
+    isPlaying = true;
+    currentStep = 0;
+    nextNoteTime = actx.currentTime + 0.05;
+    scheduler();
+    document.getElementById('playIcon').innerHTML = '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
+  }
+  function stopTransport(){
+    isPlaying = false;
+    clearTimeout(schedulerTimer);
+    document.querySelectorAll('.step.playing').forEach(el => el.classList.remove('playing'));
+    scheduledSteps = [];
+    document.getElementById('playIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+  }
+  document.getElementById('playBtn').addEventListener('click', () => {
+    isPlaying ? stopTransport() : startTransport();
+  });
+
+  // visualizer
+  function drawViz(){
+    const canvas = document.getElementById('viz');
+    const ctx = canvas.getContext('2d');
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    function loop(){
+      analyser.getByteFrequencyData(data);
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const barW = canvas.width / data.length;
+      const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      ctx.fillStyle = accent || '#06D6A0';
+      for(let i=0;i<data.length;i++){
+        const h = (data[i]/255) * canvas.height;
+        ctx.fillRect(i*barW, canvas.height - h, barW-2, h);
+      }
+      requestAnimationFrame(loop);
+    }
+    loop();
+  }
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    initAudio();
+    requestAnimationFrame(updatePlayhead);
+    const boot = document.getElementById('boot');
+    boot.style.opacity = '0';
+    setTimeout(()=> boot.remove(), 500);
+  });
+})();
+</script>
+</body>
+</html>
