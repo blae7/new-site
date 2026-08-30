@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal — Personal Site</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0E1A;
+    --bg-soft: #10142470;
+    --paper: #F5F3EE;
+    --aqua: #6EE7D8;
+    --amber: #F2B441;
+    --violet: #8B7FD1;
+    --line: #2A2F45;
+  }
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--paper);
+    font-family: 'Space Grotesk', sans-serif;
+    overflow-x: hidden;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position: relative;
+    min-height: 100svh;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8vw;
+  }
+  #stars{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    display:block;
+  }
+  .hero-inner{ position:relative; z-index:2; max-width: 780px; }
+  .eyebrow{
+    font-size: 0.8rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--aqua);
+    margin-bottom: 1.4rem;
+    display:flex; align-items:center; gap:.6rem;
+  }
+  .eyebrow::before{
+    content:'';
+    width:8px; height:8px;
+    border-radius:50%;
+    background: var(--amber);
+    box-shadow: 0 0 12px var(--amber);
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ transform: scale(1); opacity:1; }
+    50%{ transform: scale(1.6); opacity:.5; }
+  }
+  h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(2.6rem, 8vw, 5.4rem);
+    line-height: 1.02;
+    margin: 0 0 1.4rem 0;
+    letter-spacing: -0.01em;
+  }
+  h1 em{
+    font-style: italic;
+    color: var(--aqua);
+    font-weight: 300;
+  }
+  .hero p{
+    font-size: clamp(1rem, 1.6vw, 1.25rem);
+    color: #C9C6D8;
+    max-width: 46ch;
+    line-height: 1.6;
+  }
+  .hero-links{
+    margin-top: 2.4rem;
+    display:flex; gap: 1rem; flex-wrap: wrap;
+  }
+  .btn{
+    font-family:'Space Grotesk';
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    padding: 0.9rem 1.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--paper);
+    text-decoration:none;
+    transition: all .25s ease;
+  }
+  .btn.primary{
+    background: var(--aqua);
+    color: #0B0E1A;
+    border-color: var(--aqua);
+    font-weight: 700;
+  }
+  .btn:hover{ transform: translateY(-2px); border-color: var(--aqua); }
+  .scroll-cue{
+    position:absolute; bottom: 6vh; left: 8vw;
+    font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase;
+    color:#6b6f88; display:flex; align-items:center; gap:.6rem; z-index:2;
+  }
+  .scroll-cue span{
+    width:1px; height:32px; background: linear-gradient(var(--aqua), transparent);
+    animation: drop 1.8s ease-in-out infinite;
+  }
+  @keyframes drop{ 0%{ transform: scaleY(0); transform-origin: top;} 50%{transform: scaleY(1); transform-origin: top;} 51%{transform-origin:bottom;} 100%{transform: scaleY(0); transform-origin: bottom;} }
+
+  /* ---------- LOG (projects) ---------- */
+  section{ padding: 7vw 8vw; position: relative; z-index: 2; }
+  .section-head{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1.2rem;
+    margin-bottom: 2.6rem;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .section-head h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+    margin:0;
+  }
+  .section-head .tag{
+    font-size:0.75rem; letter-spacing:0.2em; text-transform:uppercase; color: var(--violet);
+  }
+  .log-entry{
+    display:grid;
+    grid-template-columns: 100px 1fr auto;
+    gap: 2rem;
+    padding: 1.8rem 0;
+    border-bottom: 1px solid var(--line);
+    align-items: baseline;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .log-entry.in{ opacity:1; transform: translateY(0); }
+  .log-entry .stamp{ font-size:0.8rem; color:#6b6f88; }
+  .log-entry h3{
+    font-family:'Fraunces', serif; font-weight: 500; font-size: 1.5rem; margin:0 0 .5rem 0;
+  }
+  .log-entry p{ margin:0; color:#a9a6bc; font-size:0.95rem; max-width:60ch; line-height:1.55; }
+  .log-entry .arrow{
+    font-size: 1.4rem; color: var(--aqua); transition: transform .3s ease;
+  }
+  .log-entry:hover .arrow{ transform: translateX(6px); }
+  @media (max-width: 640px){
+    .log-entry{ grid-template-columns: 1fr; gap:.6rem; }
+  }
+
+  /* ---------- COORDINATES (contact) ---------- */
+  footer{
+    padding: 7vw 8vw 5vw;
+    position:relative; z-index:2;
+  }
+  footer h2{
+    font-family:'Fraunces', serif; font-weight:500;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    margin: 0 0 1.6rem 0;
+  }
+  .coords{
+    display:flex; gap: 2.4rem; flex-wrap:wrap;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+  }
+  .coords a{
+    color:#C9C6D8; text-decoration:none; font-size:0.9rem;
+    border-bottom: 1px solid transparent;
+    transition: border-color .2s ease, color .2s ease;
+  }
+  .coords a:hover{ color: var(--aqua); border-color: var(--aqua); }
+  .fine{ color:#494e68; font-size:0.75rem; margin-top:3rem; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <canvas id="stars"></canvas>
+  <div class="hero-inner">
+    <div class="eyebrow">Currently online</div>
+    <h1>Alex Rivera<br><em>builds things</em> at 2am.</h1>
+    <p>Self-taught developer, sound tinkerer, and collector of half-finished side projects. This is the signal log — a running record of what I'm making and breaking.</p>
+    <div class="hero-links">
+      <a class="btn primary" href="#log">View the log</a>
+      <a class="btn" href="#coordinates">Say hello</a>
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span>Scroll</div>
+</div>
+
+<section id="log">
+  <div class="section-head">
+    <h2>Signal log</h2>
+    <div class="tag">04 transmissions</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="stamp">2026 · 003</div>
+    <div>
+      <h3>Tidal — a generative ambient player</h3>
+      <p>A browser synth that composes slow, evolving pads from the current weather at your location. Built with the Web Audio API.</p>
+    </div>
+    <div class="arrow">→</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="stamp">2026 · 002</div>
+    <div>
+      <h3>Nightshift dashboard</h3>
+      <p>A minimal habit tracker for people who work odd hours — no streak-shaming, just quiet, honest logging.</p>
+    </div>
+    <div class="arrow">→</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="stamp">2025 · 011</div>
+    <div>
+      <h3>Constellation — this site</h3>
+      <p>A personal site rendered around connected points of light, because that's roughly how ideas actually feel from the inside.</p>
+    </div>
+    <div class="arrow">→</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="stamp">2025 · 004</div>
+    <div>
+      <h3>Field notes newsletter</h3>
+      <p>A biweekly note on small technical experiments, sent to a few hundred curious strangers.</p>
+    </div>
+    <div class="arrow">→</div>
+  </div>
+</section>
+
+<footer id="coordinates">
+  <h2>Get in touch.</h2>
+  <p style="color:#a9a6bc; max-width:52ch; line-height:1.6;">Open to freelance work, collaborations, or just talking about the project you can't stop thinking about.</p>
+  <div class="coords">
+    <a href="mailto:hello@example.com">hello@example.com</a>
+    <a href="#">GitHub</a>
+    <a href="#">X / Twitter</a>
+    <a href="#">Resume</a>
+  </div>
+  <div class="fine">© 2026 Alex Rivera. Built by hand, in the dark.</div>
+</footer>
+
+<script>
+  // Constellation canvas — connects nearby stars with lines
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let w, h, stars = [];
+  const STAR_COUNT_BASE = 90;
+  let mouse = { x: -9999, y: -9999 };
+
+  function resize(){
+    w = canvas.width = canvas.offsetWidth * devicePixelRatio;
+    h = canvas.height = canvas.offsetHeight * devicePixelRatio;
+    canvas.style.width = canvas.offsetWidth + 'px';
+    canvas.style.height = canvas.offsetHeight + 'px';
+    initStars();
+  }
+
+  function initStars(){
+    const count = Math.round(STAR_COUNT_BASE * (w / 1400));
+    stars = Array.from({length: Math.max(40, count)}, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 1.6 + 0.4,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.15,
+      tw: Math.random() * Math.PI * 2
+    }));
+  }
+
+  function step(){
+    ctx.clearRect(0, 0, w, h);
+    const linkDist = 130 * devicePixelRatio;
+
+    for(let s of stars){
+      s.x += s.vx; s.y += s.vy;
+      s.tw += 0.02;
+      if(s.x < 0 || s.x > w) s.vx *= -1;
+      if(s.y < 0 || s.y > h) s.vy *= -1;
+    }
+
+    for(let i = 0; i < stars.length; i++){
+      for(let j = i + 1; j < stars.length; j++){
+        const a = stars[i], b = stars[j];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if(d < linkDist){
+          ctx.strokeStyle = `rgba(110, 231, 216, ${0.18 * (1 - d / linkDist)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+      // link to mouse
+      const dm = Math.hypot(stars[i].x - mouse.x, stars[i].y - mouse.y);
+      if(dm < linkDist * 1.4){
+        ctx.strokeStyle = `rgba(242, 180, 65, ${0.35 * (1 - dm / (linkDist*1.4))})`;
+        ctx.beginPath();
+        ctx.moveTo(stars[i].x, stars[i].y);
+        ctx.lineTo(mouse.x, mouse.y);
+        ctx.stroke();
+      }
+    }
+
+    for(let s of stars){
+      const flicker = 0.6 + Math.sin(s.tw) * 0.4;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * devicePixelRatio, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(245, 243, 238, ${flicker})`;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = (e.clientX - rect.left) * devicePixelRatio;
+    mouse.y = (e.clientY - rect.top) * devicePixelRatio;
+  });
+  window.addEventListener('touchmove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    mouse.x = (t.clientX - rect.left) * devicePixelRatio;
+    mouse.y = (t.clientY - rect.top) * devicePixelRatio;
+  });
+
+  resize();
+  step();
+
+  // Scroll reveal for log entries
+  const entries = document.querySelectorAll('.log-entry');
+  const io = new IntersectionObserver((items) => {
+    items.forEach(item => {
+      if(item.isIntersecting) item.target.classList.add('in');
+    });
+  }, { threshold: 0.2 });
+  entries.forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
