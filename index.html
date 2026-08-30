@@ -3,356 +3,351 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Signal — Personal Site</title>
+<title>Jason Chen — Resume</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #0B0E1A;
-    --bg-soft: #10142470;
-    --paper: #F5F3EE;
-    --aqua: #6EE7D8;
-    --amber: #F2B441;
-    --violet: #8B7FD1;
-    --line: #2A2F45;
+    --bg: #F3EFDF;
+    --bg-deep: #ECE6D0;
+    --ink: #24321F;
+    --forest: #1F3B2C;
+    --moss: #6E8F55;
+    --gold: #D9A441;
+    --bark: #5B4636;
+    --line: #C9C1A4;
   }
   *{ box-sizing: border-box; }
   html{ scroll-behavior: smooth; }
   body{
     margin:0;
     background: var(--bg);
-    color: var(--paper);
-    font-family: 'Space Grotesk', sans-serif;
+    color: var(--ink);
+    font-family: 'Work Sans', sans-serif;
     overflow-x: hidden;
   }
   @media (prefers-reduced-motion: reduce){
     *{ animation: none !important; transition: none !important; }
   }
 
+  /* ---------- Falling leaves (ambient, subtle) ---------- */
+  .leaf{
+    position: fixed;
+    top: -40px;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    animation: fall linear infinite;
+  }
+  @keyframes fall{
+    to{ transform: translateY(110vh) rotate(340deg); }
+  }
+
   /* ---------- HERO ---------- */
   .hero{
     position: relative;
-    min-height: 100svh;
-    display:flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 8vw;
+    padding: 10vw 8vw 6vw;
+    z-index: 2;
   }
-  #stars{
-    position:absolute; inset:0;
-    width:100%; height:100%;
-    display:block;
-  }
-  .hero-inner{ position:relative; z-index:2; max-width: 780px; }
   .eyebrow{
-    font-size: 0.8rem;
-    letter-spacing: 0.28em;
+    font-size: 0.78rem;
+    letter-spacing: 0.24em;
     text-transform: uppercase;
-    color: var(--aqua);
-    margin-bottom: 1.4rem;
-    display:flex; align-items:center; gap:.6rem;
-  }
-  .eyebrow::before{
-    content:'';
-    width:8px; height:8px;
-    border-radius:50%;
-    background: var(--amber);
-    box-shadow: 0 0 12px var(--amber);
-    animation: pulse 2.2s ease-in-out infinite;
-  }
-  @keyframes pulse{
-    0%,100%{ transform: scale(1); opacity:1; }
-    50%{ transform: scale(1.6); opacity:.5; }
+    color: var(--moss);
+    margin-bottom: 1rem;
+    font-weight: 600;
   }
   h1{
     font-family: 'Fraunces', serif;
     font-weight: 500;
-    font-size: clamp(2.6rem, 8vw, 5.4rem);
+    font-size: clamp(2.6rem, 7vw, 4.6rem);
     line-height: 1.02;
-    margin: 0 0 1.4rem 0;
-    letter-spacing: -0.01em;
+    margin: 0 0 1rem 0;
+    color: var(--forest);
   }
-  h1 em{
-    font-style: italic;
-    color: var(--aqua);
-    font-weight: 300;
-  }
-  .hero p{
-    font-size: clamp(1rem, 1.6vw, 1.25rem);
-    color: #C9C6D8;
-    max-width: 46ch;
+  .role-line{
+    font-size: clamp(1rem, 1.8vw, 1.3rem);
+    color: var(--bark);
+    max-width: 50ch;
     line-height: 1.6;
   }
-  .hero-links{
-    margin-top: 2.4rem;
-    display:flex; gap: 1rem; flex-wrap: wrap;
-  }
-  .btn{
-    font-family:'Space Grotesk';
+  .contact-row{
+    margin-top: 2rem;
+    display:flex; gap: 1.6rem; flex-wrap: wrap;
     font-size: 0.85rem;
-    letter-spacing: 0.04em;
-    padding: 0.9rem 1.6rem;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    color: var(--paper);
-    text-decoration:none;
-    transition: all .25s ease;
   }
-  .btn.primary{
-    background: var(--aqua);
-    color: #0B0E1A;
-    border-color: var(--aqua);
-    font-weight: 700;
+  .contact-row a{
+    color: var(--forest);
+    text-decoration: none;
+    border-bottom: 1px solid var(--moss);
+    padding-bottom: 1px;
   }
-  .btn:hover{ transform: translateY(-2px); border-color: var(--aqua); }
-  .scroll-cue{
-    position:absolute; bottom: 6vh; left: 8vw;
-    font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase;
-    color:#6b6f88; display:flex; align-items:center; gap:.6rem; z-index:2;
-  }
-  .scroll-cue span{
-    width:1px; height:32px; background: linear-gradient(var(--aqua), transparent);
-    animation: drop 1.8s ease-in-out infinite;
-  }
-  @keyframes drop{ 0%{ transform: scaleY(0); transform-origin: top;} 50%{transform: scaleY(1); transform-origin: top;} 51%{transform-origin:bottom;} 100%{transform: scaleY(0); transform-origin: bottom;} }
+  .contact-row a:hover{ color: var(--gold); border-color: var(--gold); }
 
-  /* ---------- LOG (projects) ---------- */
-  section{ padding: 7vw 8vw; position: relative; z-index: 2; }
+  /* ---------- SECTION HEADS ---------- */
+  section{ padding: 4vw 8vw; position: relative; z-index: 2; }
   .section-head{
-    display:flex; justify-content:space-between; align-items:flex-end;
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 1.2rem;
-    margin-bottom: 2.6rem;
-    flex-wrap: wrap; gap: 1rem;
+    display:flex; align-items:center; gap: 1rem;
+    margin-bottom: 2.4rem;
   }
+  .section-head .leaf-icon{ flex-shrink:0; }
   .section-head h2{
     font-family:'Fraunces', serif;
     font-weight:500;
-    font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    color: var(--forest);
     margin:0;
   }
-  .section-head .tag{
-    font-size:0.75rem; letter-spacing:0.2em; text-transform:uppercase; color: var(--violet);
+
+  /* ---------- EXPERIENCE (the vine) ---------- */
+  .timeline{
+    position: relative;
+    padding-left: 3.2rem;
   }
-  .log-entry{
-    display:grid;
-    grid-template-columns: 100px 1fr auto;
-    gap: 2rem;
-    padding: 1.8rem 0;
-    border-bottom: 1px solid var(--line);
-    align-items: baseline;
+  .vine-svg{
+    position: absolute;
+    left: 0; top: 0;
+    height: 100%;
+    width: 40px;
+    overflow: visible;
+  }
+  .vine-path{
+    fill:none;
+    stroke: var(--moss);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 2000;
+    stroke-dashoffset: 2000;
+    transition: stroke-dashoffset 1.8s ease;
+  }
+  .vine-path.grown{ stroke-dashoffset: 0; }
+
+  .job{
+    position: relative;
+    padding: 0 0 3.4rem 1.6rem;
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateX(-16px);
     transition: opacity .7s ease, transform .7s ease;
   }
-  .log-entry.in{ opacity:1; transform: translateY(0); }
-  .log-entry .stamp{ font-size:0.8rem; color:#6b6f88; }
-  .log-entry h3{
-    font-family:'Fraunces', serif; font-weight: 500; font-size: 1.5rem; margin:0 0 .5rem 0;
+  .job.in{ opacity: 1; transform: translateX(0); }
+  .job::before{
+    content:'';
+    position:absolute;
+    left: -3.2rem;
+    top: 0.3rem;
+    width: 14px; height:14px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 2px var(--moss);
   }
-  .log-entry p{ margin:0; color:#a9a6bc; font-size:0.95rem; max-width:60ch; line-height:1.55; }
-  .log-entry .arrow{
-    font-size: 1.4rem; color: var(--aqua); transition: transform .3s ease;
+  .job .dates{
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--moss);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
   }
-  .log-entry:hover .arrow{ transform: translateX(6px); }
-  @media (max-width: 640px){
-    .log-entry{ grid-template-columns: 1fr; gap:.6rem; }
+  .job h3{
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 1.5rem;
+    margin: 0 0 0.2rem 0;
+    color: var(--forest);
+  }
+  .job .place{
+    font-size: 0.95rem;
+    color: var(--bark);
+    margin-bottom: 0.7rem;
+    font-style: italic;
+  }
+  .job ul{
+    margin: 0;
+    padding-left: 1.1rem;
+    color: #47523d;
+  }
+  .job li{ margin-bottom: 0.4rem; line-height: 1.55; font-size: 0.95rem; }
+
+  /* ---------- SKILLS ---------- */
+  .skills-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.4rem;
+  }
+  .skill-card{
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.4rem;
+  }
+  .skill-card h4{
+    font-family:'Fraunces', serif;
+    font-weight: 500;
+    margin: 0 0 0.6rem 0;
+    color: var(--forest);
+    font-size: 1.05rem;
+  }
+  .skill-card p{
+    margin:0; font-size: 0.88rem; color: var(--bark); line-height: 1.5;
   }
 
-  /* ---------- COORDINATES (contact) ---------- */
+  /* ---------- FOOTER ---------- */
   footer{
-    padding: 7vw 8vw 5vw;
-    position:relative; z-index:2;
+    padding: 5vw 8vw 6vw;
+    border-top: 1px solid var(--line);
+    margin-top: 2vw;
   }
   footer h2{
     font-family:'Fraunces', serif; font-weight:500;
-    font-size: clamp(2rem, 5vw, 3.4rem);
-    margin: 0 0 1.6rem 0;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    color: var(--forest);
+    margin: 0 0 1rem 0;
   }
-  .coords{
-    display:flex; gap: 2.4rem; flex-wrap:wrap;
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--line);
-  }
-  .coords a{
-    color:#C9C6D8; text-decoration:none; font-size:0.9rem;
-    border-bottom: 1px solid transparent;
-    transition: border-color .2s ease, color .2s ease;
-  }
-  .coords a:hover{ color: var(--aqua); border-color: var(--aqua); }
-  .fine{ color:#494e68; font-size:0.75rem; margin-top:3rem; }
+  footer p{ color: var(--bark); max-width: 50ch; line-height:1.6; }
+  .fine{ color:#8a8367; font-size:0.75rem; margin-top:2.4rem; }
 </style>
 </head>
 <body>
 
 <div class="hero">
-  <canvas id="stars"></canvas>
-  <div class="hero-inner">
-    <div class="eyebrow">Currently online</div>
-    <h1>Alex Rivera<br><em>builds things</em> at 2am.</h1>
-    <p>Self-taught developer, sound tinkerer, and collector of half-finished side projects. This is the signal log — a running record of what I'm making and breaking.</p>
-    <div class="hero-links">
-      <a class="btn primary" href="#log">View the log</a>
-      <a class="btn" href="#coordinates">Say hello</a>
-    </div>
+  <div class="eyebrow">Resume · Portfolio</div>
+  <h1>Jason Chen</h1>
+  <p class="role-line">Hospitality, teaching, and hands-in-the-soil work — I like roles where I'm taking care of something, whether that's a garden bed, a classroom, or a busy kitchen line.</p>
+  <div class="contact-row">
+    <a href="mailto:jason.chen@example.com">jason.chen@example.com</a>
+    <a href="#">LinkedIn</a>
+    <a href="#experience">Experience ↓</a>
   </div>
-  <div class="scroll-cue"><span></span>Scroll</div>
 </div>
 
-<section id="log">
+<section id="experience">
   <div class="section-head">
-    <h2>Signal log</h2>
-    <div class="tag">04 transmissions</div>
+    <h2>Experience</h2>
   </div>
 
-  <div class="log-entry">
-    <div class="stamp">2026 · 003</div>
-    <div>
-      <h3>Tidal — a generative ambient player</h3>
-      <p>A browser synth that composes slow, evolving pads from the current weather at your location. Built with the Web Audio API.</p>
-    </div>
-    <div class="arrow">→</div>
-  </div>
+  <div class="timeline">
+    <svg class="vine-svg" viewBox="0 0 40 900" preserveAspectRatio="none">
+      <path class="vine-path" d="M 20 0 C 30 100, 10 200, 20 300 C 30 400, 10 500, 20 600 C 30 700, 10 800, 20 900" />
+    </svg>
 
-  <div class="log-entry">
-    <div class="stamp">2026 · 002</div>
-    <div>
-      <h3>Nightshift dashboard</h3>
-      <p>A minimal habit tracker for people who work odd hours — no streak-shaming, just quiet, honest logging.</p>
+    <div class="job">
+      <div class="dates">[Add dates]</div>
+      <h3>Line Cook</h3>
+      <div class="place">Two Wheels — Vietnamese Restaurant</div>
+      <ul>
+        <li>Prepared and plated dishes to order during high-volume dinner service</li>
+        <li>Maintained station organization and food safety standards under time pressure</li>
+        <li>Collaborated with kitchen staff to keep ticket times fast and consistent</li>
+      </ul>
     </div>
-    <div class="arrow">→</div>
-  </div>
 
-  <div class="log-entry">
-    <div class="stamp">2025 · 011</div>
-    <div>
-      <h3>Constellation — this site</h3>
-      <p>A personal site rendered around connected points of light, because that's roughly how ideas actually feel from the inside.</p>
+    <div class="job">
+      <div class="dates">[Add dates]</div>
+      <h3>Gardener</h3>
+      <div class="place">Louisiana's Garden</div>
+      <ul>
+        <li>Maintained planting beds, pruning, watering schedules, and seasonal planting</li>
+        <li>Diagnosed plant health issues and adjusted care routines accordingly</li>
+        <li>Worked outdoors independently with steady attention to detail</li>
+      </ul>
     </div>
-    <div class="arrow">→</div>
-  </div>
 
-  <div class="log-entry">
-    <div class="stamp">2025 · 004</div>
-    <div>
-      <h3>Field notes newsletter</h3>
-      <p>A biweekly note on small technical experiments, sent to a few hundred curious strangers.</p>
+    <div class="job">
+      <div class="dates">[Add dates]</div>
+      <h3>Teacher Assistant</h3>
+      <div class="place">Mac</div>
+      <ul>
+        <li>Supported classroom instruction and helped students with individual questions</li>
+        <li>Assisted with grading, materials prep, and day-to-day classroom logistics</li>
+        <li>Built rapport with students to help them stay engaged and on track</li>
+      </ul>
     </div>
-    <div class="arrow">→</div>
+
+    <div class="job">
+      <div class="dates">[Add dates]</div>
+      <h3>Team Member</h3>
+      <div class="place">Lazy Sundaes — Bubble Tea Shop</div>
+      <ul>
+        <li>Prepared drinks to order and maintained consistency during rush periods</li>
+        <li>Handled register, customer service, and daily store opening/closing duties</li>
+        <li>Kept prep and storage areas clean and stocked to health code standards</li>
+      </ul>
+    </div>
   </div>
 </section>
 
-<footer id="coordinates">
-  <h2>Get in touch.</h2>
-  <p style="color:#a9a6bc; max-width:52ch; line-height:1.6;">Open to freelance work, collaborations, or just talking about the project you can't stop thinking about.</p>
-  <div class="coords">
-    <a href="mailto:hello@example.com">hello@example.com</a>
-    <a href="#">GitHub</a>
-    <a href="#">X / Twitter</a>
-    <a href="#">Resume</a>
+<section id="skills">
+  <div class="section-head">
+    <h2>Skills</h2>
   </div>
-  <div class="fine">© 2026 Alex Rivera. Built by hand, in the dark.</div>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <h4>Customer Service</h4>
+      <p>Comfortable working front-of-house under pressure, with a calm, friendly approach.</p>
+    </div>
+    <div class="skill-card">
+      <h4>Kitchen Ops</h4>
+      <p>Line cooking, food prep, station management, and food safety practices.</p>
+    </div>
+    <div class="skill-card">
+      <h4>Plant Care</h4>
+      <p>Hands-on horticulture experience — planting, pruning, and seasonal maintenance.</p>
+    </div>
+    <div class="skill-card">
+      <h4>Teaching Support</h4>
+      <p>Patient, clear communication when helping others learn or troubleshoot.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <h2>Let's talk.</h2>
+  <p>Open to new opportunities in hospitality, education, or outdoor/hands-on work. Reach out any time.</p>
+  <div class="contact-row">
+    <a href="mailto:jason.chen@example.com">jason.chen@example.com</a>
+    <a href="#">LinkedIn</a>
+    <a href="#">Resume PDF</a>
+  </div>
+  <div class="fine">© 2026 Jason Chen.</div>
 </footer>
 
 <script>
-  // Constellation canvas — connects nearby stars with lines
-  const canvas = document.getElementById('stars');
-  const ctx = canvas.getContext('2d');
-  let w, h, stars = [];
-  const STAR_COUNT_BASE = 90;
-  let mouse = { x: -9999, y: -9999 };
+  // Falling leaves — ambient background motion
+  const leafSVG = (color) => `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6 6 3 12 6 18C9 22 15 22 18 18C21 12 18 6 12 2Z" fill="${color}"/>
+      <path d="M12 2V20" stroke="${color === '#6E8F55' ? '#4a6338' : '#b8862f'}" stroke-width="0.8"/>
+    </svg>`;
+  const colors = ['#6E8F55', '#D9A441', '#8CA870'];
 
-  function resize(){
-    w = canvas.width = canvas.offsetWidth * devicePixelRatio;
-    h = canvas.height = canvas.offsetHeight * devicePixelRatio;
-    canvas.style.width = canvas.offsetWidth + 'px';
-    canvas.style.height = canvas.offsetHeight + 'px';
-    initStars();
+  function spawnLeaf(){
+    const leaf = document.createElement('div');
+    leaf.className = 'leaf';
+    const size = 12 + Math.random() * 10;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    leaf.innerHTML = leafSVG(color);
+    leaf.style.left = Math.random() * 100 + 'vw';
+    leaf.style.width = size + 'px';
+    leaf.style.animationDuration = (9 + Math.random() * 8) + 's';
+    document.body.appendChild(leaf);
+    setTimeout(() => leaf.remove(), 18000);
   }
+  for(let i=0;i<5;i++) setTimeout(spawnLeaf, i * 1400);
+  setInterval(spawnLeaf, 2600);
 
-  function initStars(){
-    const count = Math.round(STAR_COUNT_BASE * (w / 1400));
-    stars = Array.from({length: Math.max(40, count)}, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      r: Math.random() * 1.6 + 0.4,
-      vx: (Math.random() - 0.5) * 0.15,
-      vy: (Math.random() - 0.5) * 0.15,
-      tw: Math.random() * Math.PI * 2
-    }));
-  }
-
-  function step(){
-    ctx.clearRect(0, 0, w, h);
-    const linkDist = 130 * devicePixelRatio;
-
-    for(let s of stars){
-      s.x += s.vx; s.y += s.vy;
-      s.tw += 0.02;
-      if(s.x < 0 || s.x > w) s.vx *= -1;
-      if(s.y < 0 || s.y > h) s.vy *= -1;
-    }
-
-    for(let i = 0; i < stars.length; i++){
-      for(let j = i + 1; j < stars.length; j++){
-        const a = stars[i], b = stars[j];
-        const d = Math.hypot(a.x - b.x, a.y - b.y);
-        if(d < linkDist){
-          ctx.strokeStyle = `rgba(110, 231, 216, ${0.18 * (1 - d / linkDist)})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.stroke();
-        }
+  // Grow vine + reveal jobs on scroll
+  const vine = document.querySelector('.vine-path');
+  const jobs = document.querySelectorAll('.job');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add('in');
+        vine.classList.add('grown');
       }
-      // link to mouse
-      const dm = Math.hypot(stars[i].x - mouse.x, stars[i].y - mouse.y);
-      if(dm < linkDist * 1.4){
-        ctx.strokeStyle = `rgba(242, 180, 65, ${0.35 * (1 - dm / (linkDist*1.4))})`;
-        ctx.beginPath();
-        ctx.moveTo(stars[i].x, stars[i].y);
-        ctx.lineTo(mouse.x, mouse.y);
-        ctx.stroke();
-      }
-    }
-
-    for(let s of stars){
-      const flicker = 0.6 + Math.sin(s.tw) * 0.4;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r * devicePixelRatio, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(245, 243, 238, ${flicker})`;
-      ctx.fill();
-    }
-
-    requestAnimationFrame(step);
-  }
-
-  window.addEventListener('resize', resize);
-  window.addEventListener('mousemove', e => {
-    const rect = canvas.getBoundingClientRect();
-    mouse.x = (e.clientX - rect.left) * devicePixelRatio;
-    mouse.y = (e.clientY - rect.top) * devicePixelRatio;
-  });
-  window.addEventListener('touchmove', e => {
-    const rect = canvas.getBoundingClientRect();
-    const t = e.touches[0];
-    mouse.x = (t.clientX - rect.left) * devicePixelRatio;
-    mouse.y = (t.clientY - rect.top) * devicePixelRatio;
-  });
-
-  resize();
-  step();
-
-  // Scroll reveal for log entries
-  const entries = document.querySelectorAll('.log-entry');
-  const io = new IntersectionObserver((items) => {
-    items.forEach(item => {
-      if(item.isIntersecting) item.target.classList.add('in');
     });
-  }, { threshold: 0.2 });
-  entries.forEach(el => io.observe(el));
+  }, { threshold: 0.25 });
+  jobs.forEach(j => io.observe(j));
 </script>
 
 </body>
