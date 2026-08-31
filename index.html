@@ -267,6 +267,7 @@
 
   // ---------------- pointer handling ----------------
   function handleDown(e){
+    if(actx && actx.state === 'suspended') actx.resume();
     const xNorm = e.clientX / window.innerWidth;
     const yNorm = e.clientY / window.innerHeight;
     noteOn(e.pointerId, xNorm, yNorm);
@@ -318,8 +319,23 @@
   loop();
 
   // ---------------- boot / start ----------------
+  function playConfirmChime(){
+    const osc = actx.createOscillator();
+    const g = actx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 660;
+    g.gain.setValueAtTime(0, actx.currentTime);
+    g.gain.linearRampToValueAtTime(0.35, actx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.6);
+    osc.connect(g); g.connect(master);
+    osc.start();
+    osc.stop(actx.currentTime + 0.65);
+  }
+
   document.getElementById('startBtn').addEventListener('click', () => {
     initAudio();
+    // Safari/iPadOS sometimes leaves the context suspended even after a user gesture — force it awake.
+    actx.resume().then(() => { playConfirmChime(); }).catch(() => { playConfirmChime(); });
     if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
       DeviceOrientationEvent.requestPermission().then(state => {
         if(state === 'granted') window.addEventListener('deviceorientation', handleOrientation);
