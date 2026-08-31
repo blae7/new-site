@@ -3,446 +3,339 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>Compass — Maps</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<title>Resonance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --accent: #007AFF;
-    --red: #FF3B30;
-    --card: rgba(255,255,255,0.78);
-    --card-solid: #ffffff;
-    --line: rgba(60,60,67,0.15);
-    --text: #1C1C1E;
-    --dim: #8E8E93;
-  }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-  html,body{ margin:0; padding:0; height:100%; width:100%; overflow:hidden;
-    font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-    color: var(--text);
-  }
-  #map{ position:fixed; inset:0; z-index:1; }
-  .leaflet-control-attribution{ font-size:9px !important; opacity:0.6; }
-  .leaflet-control-zoom{ display:none; }
-
-  .glass{
-    background: var(--card);
-    backdrop-filter: blur(24px) saturate(1.6);
-    -webkit-backdrop-filter: blur(24px) saturate(1.6);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.14);
-  }
-
-  /* ---------- search bar ---------- */
-  .search-wrap{
-    position:fixed; z-index: 20;
-    top: max(16px, env(safe-area-inset-top));
-    left:16px; right:16px;
-    max-width: 420px;
-  }
-  .search-bar{
-    display:flex; align-items:center; gap:8px;
-    border-radius: 16px;
-    padding: 12px 14px;
-  }
-  .search-bar svg{ flex-shrink:0; opacity:0.55; }
-  .search-bar input{
-    border:none; outline:none; background:transparent;
-    font-size:1rem; font-family:inherit; flex:1; color:var(--text);
-  }
-  .search-bar input::placeholder{ color: var(--dim); }
-  .clear-btn{
-    display:none; width:20px; height:20px; border-radius:50%;
-    background: var(--dim); color:#fff; border:none; font-size:0.7rem;
-    align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
-  }
-  .clear-btn.show{ display:flex; }
-
-  .suggestions{
-    margin-top:8px; border-radius:16px; overflow:hidden; max-height: 50vh; overflow-y:auto;
-    display:none;
-  }
-  .suggestions.show{ display:block; }
-  .sugg-item{
-    display:flex; align-items:center; gap:12px;
-    padding: 12px 14px; border-bottom:1px solid var(--line); cursor:pointer;
-  }
-  .sugg-item:last-child{ border-bottom:none; }
-  .sugg-item:active{ background: rgba(0,0,0,0.04); }
-  .sugg-icon{
-    width:32px; height:32px; border-radius:50%; background: var(--dim);
-    display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff;
-  }
-  .sugg-text .name{ font-size:0.92rem; font-weight:600; }
-  .sugg-text .addr{ font-size:0.78rem; color:var(--dim); }
-  .sugg-empty{ padding:16px; font-size:0.85rem; color:var(--dim); text-align:center; }
-  .sugg-label{ padding:10px 14px 4px; font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--dim); }
-
-  /* ---------- right side controls ---------- */
-  .side-controls{
-    position:fixed; z-index:20; right:16px; bottom: max(120px, calc(28vh)); /* repositioned dynamically for sheet */
-    display:flex; flex-direction:column; gap:10px;
-    transition: bottom 0.35s cubic-bezier(.25,1,.5,1);
-  }
-  .ctrl-btn{
-    width:44px; height:44px; border-radius:14px; border:none; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; color: var(--text);
-  }
-  .ctrl-btn.locate{ color: var(--accent); }
-  .ctrl-stack{ border-radius:14px; overflow:hidden; }
-  .ctrl-stack .ctrl-btn{ border-radius:0; }
-  .ctrl-stack .ctrl-btn + .ctrl-btn{ border-top:1px solid var(--line); }
-
-  /* ---------- bottom sheet ---------- */
-  .sheet{
-    position:fixed; z-index:25; left:0; right:0; bottom:0;
-    border-radius: 22px 22px 0 0;
-    padding: 10px 18px max(20px, env(safe-area-inset-bottom));
-    transform: translateY(110%);
-    transition: transform 0.4s cubic-bezier(.25,1,.5,1);
-    max-height: 46vh;
-    overflow-y:auto;
-  }
-  .sheet.show{ transform: translateY(0); }
-  .sheet-handle{ width:36px; height:5px; border-radius:3px; background: var(--line); margin: 4px auto 14px; }
-  .sheet-title{ font-size:1.3rem; font-weight:700; margin:0 0 2px; }
-  .sheet-sub{ font-size:0.85rem; color:var(--dim); margin-bottom:16px; }
-  .sheet-actions{ display:flex; gap:10px; margin-bottom: 6px; flex-wrap:wrap; }
-  .action-btn{
-    flex:1; min-width:84px;
-    display:flex; flex-direction:column; align-items:center; gap:6px;
-    background: rgba(118,118,128,0.08); border:none; border-radius:14px;
-    padding: 12px 8px; cursor:pointer; color: var(--text); font-size:0.72rem; font-weight:600;
-  }
-  .action-btn .circle{
-    width:38px; height:38px; border-radius:50%; background: var(--accent); color:#fff;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .action-btn.close .circle{ background: var(--dim); }
-  .route-info{
-    display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);
-    align-items:center; justify-content:space-between;
-  }
-  .route-info.show{ display:flex; }
-  .route-info .big{ font-size:1.6rem; font-weight:700; color: var(--accent); }
-  .route-info .small{ font-size:0.8rem; color:var(--dim); }
-  .end-route{
-    background: rgba(255,59,48,0.12); color: var(--red); border:none;
-    border-radius:12px; padding:9px 14px; font-size:0.78rem; font-weight:600; cursor:pointer;
-  }
-
-  /* ---------- recents / empty state ---------- */
-  .recents-panel{ padding: 4px 0 8px; }
-
-  /* ---------- markers ---------- */
-  .pin{
-    width:30px; height:30px;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .user-dot{
-    width:16px; height:16px; border-radius:50%;
-    background: var(--accent); border:3px solid #fff;
-    box-shadow: 0 0 0 2px rgba(0,122,255,0.4);
-    position:relative;
-  }
-  .user-dot::after{
-    content:''; position:absolute; inset:-14px; border-radius:50%;
-    background: rgba(0,122,255,0.18);
-    animation: pulse 2.2s ease-out infinite;
-  }
-  @keyframes pulse{ 0%{ transform:scale(0.4); opacity:0.9; } 100%{ transform:scale(1.6); opacity:0; } }
+  :root{ --dim: rgba(255,255,255,0.55); --line: rgba(255,255,255,0.14); }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+  html,body{ margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; touch-action:none; }
+  canvas{ display:block; position:fixed; inset:0; }
+  body{ font-family:'JetBrains Mono', monospace; color:#fff; }
 
   .boot{
-    position:fixed; inset:0; z-index:100; background:#fff;
-    display:flex; align-items:center; justify-content:center;
-    transition: opacity 0.5s ease;
+    position:fixed; inset:0; z-index:100; background:#000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+    transition: opacity 1s ease; text-align:center; padding: 0 10vw;
   }
-  .boot p{ color: var(--dim); font-size:0.85rem; }
+  .boot h1{
+    font-family:'Fraunces', serif; font-weight:300; font-style:italic;
+    font-size: clamp(2.2rem, 8vw, 3.6rem); margin:0; letter-spacing:0.01em;
+  }
+  .boot p{ color: var(--dim); font-size:0.78rem; letter-spacing:0.06em; line-height:1.7; max-width:36ch; }
+  .boot button{
+    font-family:'JetBrains Mono'; font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase;
+    background: transparent; border:1px solid rgba(255,255,255,0.4); color:#fff;
+    border-radius: 999px; padding:16px 36px; cursor:pointer; margin-top:8px;
+    transition: all .25s ease;
+  }
+  .boot button:active{ background: rgba(255,255,255,0.15); }
+
+  .hint{
+    position:fixed; top: max(24px, env(safe-area-inset-top)); left:0; right:0;
+    text-align:center; z-index:10; pointer-events:none;
+    font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase; color: var(--dim);
+    transition: opacity 1.2s ease;
+  }
+
+  .ui{
+    position:fixed; z-index:10; bottom: max(20px, env(safe-area-inset-bottom));
+    left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:14px;
+    pointer-events:none;
+  }
+  .scales{ display:flex; gap:8px; pointer-events:all; }
+  .scale-btn{
+    font-family:'JetBrains Mono'; font-size:0.65rem; letter-spacing:0.06em; text-transform:uppercase;
+    background: rgba(255,255,255,0.06); border:1px solid var(--line); color: var(--dim);
+    border-radius:999px; padding:9px 15px; cursor:pointer; backdrop-filter: blur(10px);
+  }
+  .scale-btn.active{ background:#fff; color:#000; border-color:#fff; }
+  .icon-row{ display:flex; gap:10px; pointer-events:all; }
+  .icon-btn{
+    width:42px; height:42px; border-radius:50%;
+    background: rgba(255,255,255,0.06); border:1px solid var(--line); color:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    backdrop-filter: blur(10px);
+  }
+  .flash{
+    position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:50;
+    transition: opacity 0.15s ease;
+  }
 </style>
 </head>
 <body>
 
-<div class="boot" id="boot"><p>Loading map…</p></div>
-<div id="map"></div>
-
-<div class="search-wrap">
-  <div class="search-bar glass">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#1C1C1E" stroke-width="2"/><path d="M21 21l-4-4" stroke="#1C1C1E" stroke-width="2" stroke-linecap="round"/></svg>
-    <input id="searchInput" type="text" placeholder="Search Maps" autocomplete="off">
-    <button class="clear-btn" id="clearBtn">✕</button>
-  </div>
-  <div class="suggestions glass" id="suggestions"></div>
+<div class="boot" id="boot">
+  <h1>Resonance</h1>
+  <p>Touch the screen. Every stroke paints light and plays a note — nothing you play can sound wrong. Tilt the iPad to stir the wind.</p>
+  <button id="startBtn">Begin</button>
 </div>
 
-<div class="side-controls" id="sideControls">
-  <div class="ctrl-stack glass">
-    <button class="ctrl-btn" id="zoomIn">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#1C1C1E" stroke-width="2.4" stroke-linecap="round"/></svg>
-    </button>
-    <button class="ctrl-btn" id="zoomOut">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="#1C1C1E" stroke-width="2.4" stroke-linecap="round"/></svg>
-    </button>
-  </div>
-  <button class="ctrl-btn glass" id="layerBtn" title="Change map style">
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 2l9 5-9 5-9-5 9-5z" stroke="#1C1C1E" stroke-width="1.8" stroke-linejoin="round"/><path d="M3 12l9 5 9-5M3 17l9 5 9-5" stroke="#1C1C1E" stroke-width="1.8" stroke-linejoin="round"/></svg>
-  </button>
-  <button class="ctrl-btn glass locate" id="locateBtn" title="My location">
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="#007AFF"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#007AFF" stroke-width="2" stroke-linecap="round"/></svg>
-  </button>
-</div>
+<div class="hint" id="hint">touch and drag to play &nbsp;·&nbsp; hold multiple fingers for chords</div>
 
-<div class="sheet glass" id="sheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-title" id="sheetTitle">Place</div>
-  <div class="sheet-sub" id="sheetSub">Address</div>
-  <div class="sheet-actions">
-    <button class="action-btn" id="btnDirections">
-      <div class="circle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l16-8-6 16-3-7-7-1z" fill="#fff"/></svg></div>
-      Directions
-    </button>
-    <button class="action-btn" id="btnSave">
-      <div class="circle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-4.6-9.5-9C1 8 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6 4 4.5 8-2.5 4.4-9.5 9-9.5 9z" fill="#fff"/></svg></div>
-      Save
-    </button>
-    <button class="action-btn" id="btnShare">
-      <div class="circle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="2.4" stroke="#fff" stroke-width="1.8"/><circle cx="6" cy="12" r="2.4" stroke="#fff" stroke-width="1.8"/><circle cx="18" cy="19" r="2.4" stroke="#fff" stroke-width="1.8"/><path d="M8.2 10.8L16 6.2M8.2 13.2L16 17.8" stroke="#fff" stroke-width="1.6"/></svg></div>
-      Share
-    </button>
-    <button class="action-btn close" id="btnClose">
-      <div class="circle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></div>
-      Close
-    </button>
+<canvas id="c"></canvas>
+<div class="flash" id="flash"></div>
+
+<div class="ui">
+  <div class="scales">
+    <button class="scale-btn active" data-scale="pentatonic">Pentatonic</button>
+    <button class="scale-btn" data-scale="lydian">Lydian</button>
+    <button class="scale-btn" data-scale="minor">Minor</button>
+    <button class="scale-btn" data-scale="wholetone">Whole-tone</button>
   </div>
-  <div class="route-info" id="routeInfo">
-    <div>
-      <div class="big" id="routeTime">--</div>
-      <div class="small" id="routeDist">--</div>
-    </div>
-    <button class="end-route" id="endRoute">End Route</button>
+  <div class="icon-row">
+    <button class="icon-btn" id="muteBtn" title="Mute">🔊</button>
+    <button class="icon-btn" id="saveBtn" title="Save snapshot">⬇</button>
+    <button class="icon-btn" id="clearBtn" title="Clear canvas">✕</button>
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){
-  const NYC = [40.7128, -74.0060];
-  const RECENTS_KEY = 'compass-recents-v1';
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  let W, H, DPR;
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.width = window.innerWidth * DPR;
+    H = canvas.height = window.innerHeight * DPR;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0,0,W,H);
+  }
+  resize();
+  window.addEventListener('resize', resize);
 
-  const map = L.map('map', { zoomControl:false, attributionControl:true }).setView(NYC, 13);
-
-  const layers = {
-    standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap contributors', maxZoom:19 }),
-    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution:'Tiles © Esri', maxZoom:19 }),
-    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution:'© OpenStreetMap © CARTO', maxZoom:19, subdomains:'abcd' })
+  // ---------------- scales ----------------
+  const SCALES = {
+    pentatonic: [0,2,4,7,9],
+    lydian: [0,2,4,6,7,9,11],
+    minor: [0,2,3,5,7,8,10],
+    wholetone: [0,2,4,6,8,10]
   };
-  const layerOrder = ['standard','satellite','dark'];
-  let layerIdx = 0;
-  layers.standard.addTo(map);
+  let currentScale = 'pentatonic';
+  const ROOT = 220; // A3
+  const OCTAVE_RANGE = 3;
 
-  document.getElementById('layerBtn').addEventListener('click', () => {
-    map.removeLayer(layers[layerOrder[layerIdx]]);
-    layerIdx = (layerIdx + 1) % layerOrder.length;
-    layers[layerOrder[layerIdx]].addTo(map);
+  function freqForY(yNorm){ // yNorm: 0 (top) = high, 1 (bottom) = low
+    const scale = SCALES[currentScale];
+    const totalSteps = scale.length * OCTAVE_RANGE;
+    const stepFloat = (1 - yNorm) * totalSteps;
+    const stepIdx = Math.round(stepFloat);
+    const octave = Math.floor(stepIdx / scale.length);
+    const degree = scale[((stepIdx % scale.length) + scale.length) % scale.length];
+    const semitone = octave*12 + degree;
+    return ROOT * Math.pow(2, semitone/12);
+  }
+
+  document.querySelectorAll('.scale-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentScale = btn.dataset.scale;
+    });
   });
 
-  document.getElementById('zoomIn').addEventListener('click', () => map.zoomIn());
-  document.getElementById('zoomOut').addEventListener('click', () => map.zoomOut());
-
-  // ---------------- pins ----------------
-  const pinSVG = (color) => `
-    <svg width="30" height="38" viewBox="0 0 30 38" fill="none">
-      <path d="M15 0C6.7 0 0 6.7 0 15c0 10.5 15 23 15 23s15-12.5 15-23C30 6.7 23.3 0 15 0z" fill="${color}"/>
-      <circle cx="15" cy="15" r="6" fill="white"/>
-    </svg>`;
-  const searchIcon = L.divIcon({ html: pinSVG('#FF3B30'), className:'pin', iconSize:[30,38], iconAnchor:[15,36] });
-  const userIcon = L.divIcon({ html: '<div class="user-dot"></div>', className:'pin', iconSize:[16,16], iconAnchor:[8,8] });
-
-  let searchMarker = null;
-  let userMarker = null;
-  let userLatLng = null;
-  let routeLine = null;
-  let activePlace = null;
-
-  function placeMarker(lat, lon){
-    if(searchMarker) map.removeLayer(searchMarker);
-    searchMarker = L.marker([lat, lon], { icon: searchIcon }).addTo(map);
+  // ---------------- wind (device tilt) ----------------
+  let wind = { x: 0, y: 0 };
+  function handleOrientation(e){
+    const gamma = (e.gamma || 0) / 45;  // left-right
+    const beta = ((e.beta || 0) - 30) / 45; // front-back, offset for natural hold angle
+    wind.x = Math.max(-1, Math.min(1, gamma)) * 0.035;
+    wind.y = Math.max(-1, Math.min(1, beta)) * 0.035;
   }
 
-  // ---------------- sheet ----------------
-  const sheet = document.getElementById('sheet');
-  const sideControls = document.getElementById('sideControls');
-  function openSheet(title, sub){
-    document.getElementById('sheetTitle').textContent = title;
-    document.getElementById('sheetSub').textContent = sub;
-    sheet.classList.add('show');
-    sideControls.style.bottom = '42vh';
-    document.getElementById('routeInfo').classList.remove('show');
+  // ---------------- particles ----------------
+  let particles = [];
+  function spawnParticles(x, y, hue, count){
+    for(let i=0;i<count;i++){
+      particles.push({
+        x: x + (Math.random()-0.5)*6,
+        y: y + (Math.random()-0.5)*6,
+        vx: (Math.random()-0.5)*0.6,
+        vy: (Math.random()-0.5)*0.6,
+        hue: hue + (Math.random()-0.5)*20,
+        life: 1,
+        decay: 0.004 + Math.random()*0.006,
+        size: (2 + Math.random()*3) * DPR
+      });
+    }
   }
-  function closeSheet(){
-    sheet.classList.remove('show');
-    sideControls.style.bottom = 'max(120px, calc(28vh))';
-    if(searchMarker){ map.removeLayer(searchMarker); searchMarker = null; }
-    if(routeLine){ map.removeLayer(routeLine); routeLine = null; }
-    activePlace = null;
+  function updateParticles(){
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.vx += wind.x; p.vy += wind.y;
+      p.vx *= 0.985; p.vy *= 0.985;
+      p.x += p.vx * DPR; p.y += p.vy * DPR;
+      p.life -= p.decay;
+      if(p.life <= 0 || p.x<0||p.x>W||p.y<0||p.y>H) particles.splice(i,1);
+    }
   }
-  document.getElementById('btnClose').addEventListener('click', closeSheet);
-
-  // ---------------- recents ----------------
-  function getRecents(){
-    try{ return JSON.parse(localStorage.getItem(RECENTS_KEY)) || []; }catch(e){ return []; }
-  }
-  function addRecent(place){
-    let recents = getRecents().filter(r => r.display !== place.display);
-    recents.unshift(place);
-    recents = recents.slice(0, 8);
-    localStorage.setItem(RECENTS_KEY, JSON.stringify(recents));
-  }
-
-  function selectPlace(place, fromInteraction){
-    activePlace = place;
-    map.flyTo([place.lat, place.lon], 15, { duration: 0.9 });
-    placeMarker(place.lat, place.lon);
-    openSheet(place.name, place.display);
-    if(fromInteraction) addRecent(place);
-    hideSuggestions();
-    searchInput.value = place.name;
-    clearBtn.classList.add('show');
+  function drawParticles(){
+    ctx.fillStyle = 'rgba(0,0,0,0.07)';
+    ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation = 'lighter';
+    for(const p of particles){
+      const alpha = Math.max(0, p.life);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+      ctx.fillStyle = `hsla(${p.hue}, 85%, 65%, ${alpha})`;
+      ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
   }
 
-  // ---------------- search ----------------
-  const searchInput = document.getElementById('searchInput');
-  const clearBtn = document.getElementById('clearBtn');
-  const suggestionsEl = document.getElementById('suggestions');
-  let searchTimer = null;
+  // ---------------- audio engine ----------------
+  let actx, master, delayNode, feedbackGain, wetGain, muted = false;
+  const voices = new Map(); // pointerId -> { osc, filter, gain }
 
-  function hideSuggestions(){ suggestionsEl.classList.remove('show'); suggestionsEl.innerHTML=''; }
+  function initAudio(){
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    master = actx.createGain();
+    master.gain.value = 0.8;
 
-  function renderRecents(){
-    const recents = getRecents();
-    if(recents.length === 0){ hideSuggestions(); return; }
-    suggestionsEl.innerHTML = '<div class="sugg-label">Recents</div>' + recents.map((r, i) => `
-      <div class="sugg-item" data-idx="${i}">
-        <div class="sugg-icon">🕘</div>
-        <div class="sugg-text"><div class="name">${r.name}</div><div class="addr">${r.display}</div></div>
-      </div>`).join('');
-    suggestionsEl.classList.add('show');
-    suggestionsEl.querySelectorAll('.sugg-item').forEach(el => {
-      el.addEventListener('click', () => selectPlace(recents[+el.dataset.idx], true));
+    delayNode = actx.createDelay(2.0);
+    delayNode.delayTime.value = 0.32;
+    feedbackGain = actx.createGain();
+    feedbackGain.gain.value = 0.38;
+    wetGain = actx.createGain();
+    wetGain.gain.value = 0.5;
+
+    delayNode.connect(feedbackGain);
+    feedbackGain.connect(delayNode);
+    delayNode.connect(wetGain);
+    wetGain.connect(actx.destination);
+
+    master.connect(actx.destination);
+    master.connect(delayNode);
+
+    startDrone();
+  }
+
+  function startDrone(){
+    [ROOT/2, ROOT/2 * Math.pow(2,7/12)].forEach((f, i) => {
+      const osc = actx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      const g = actx.createGain();
+      g.gain.value = 0.05;
+      const lfo = actx.createOscillator();
+      lfo.frequency.value = 0.05 + i*0.02;
+      const lfoGain = actx.createGain();
+      lfoGain.gain.value = 0.015;
+      lfo.connect(lfoGain); lfoGain.connect(g.gain);
+      osc.connect(g); g.connect(master);
+      osc.start(); lfo.start();
     });
   }
 
-  async function runSearch(q){
-    try{
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      if(!data.length){
-        suggestionsEl.innerHTML = '<div class="sugg-empty">No results found</div>';
-        suggestionsEl.classList.add('show');
-        return;
-      }
-      const places = data.map(d => ({
-        name: (d.display_name || '').split(',')[0],
-        display: d.display_name,
-        lat: parseFloat(d.lat), lon: parseFloat(d.lon)
-      }));
-      suggestionsEl.innerHTML = places.map((p, i) => `
-        <div class="sugg-item" data-idx="${i}">
-          <div class="sugg-icon">📍</div>
-          <div class="sugg-text"><div class="name">${p.name}</div><div class="addr">${p.display}</div></div>
-        </div>`).join('');
-      suggestionsEl.classList.add('show');
-      suggestionsEl.querySelectorAll('.sugg-item').forEach(el => {
-        el.addEventListener('click', () => selectPlace(places[+el.dataset.idx], true));
-      });
-    }catch(e){
-      suggestionsEl.innerHTML = '<div class="sugg-empty">Search unavailable — check connection</div>';
-      suggestionsEl.classList.add('show');
-    }
+  function hueForX(xNorm){ return xNorm * 300; }
+
+  function noteOn(id, xNorm, yNorm){
+    if(!actx) return;
+    const freq = freqForY(yNorm);
+    const osc = actx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const filter = actx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 400 + xNorm*3000;
+    const gain = actx.createGain();
+    gain.gain.setValueAtTime(0, actx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.22, actx.currentTime + 0.04);
+    osc.connect(filter); filter.connect(gain); gain.connect(master);
+    osc.start();
+    voices.set(id, { osc, filter, gain });
+  }
+  function noteUpdate(id, xNorm, yNorm){
+    const v = voices.get(id);
+    if(!v) return;
+    const freq = freqForY(yNorm);
+    v.osc.frequency.linearRampToValueAtTime(freq, actx.currentTime + 0.08);
+    v.filter.frequency.linearRampToValueAtTime(400 + xNorm*3000, actx.currentTime + 0.08);
+  }
+  function noteOff(id){
+    const v = voices.get(id);
+    if(!v) return;
+    v.gain.gain.cancelScheduledValues(actx.currentTime);
+    v.gain.gain.setValueAtTime(v.gain.gain.value, actx.currentTime);
+    v.gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.5);
+    v.osc.stop(actx.currentTime + 0.55);
+    voices.delete(id);
   }
 
-  searchInput.addEventListener('input', () => {
-    const q = searchInput.value.trim();
-    clearBtn.classList.toggle('show', q.length > 0);
-    clearTimeout(searchTimer);
-    if(q.length === 0){ renderRecents(); return; }
-    searchTimer = setTimeout(() => runSearch(q), 420);
-  });
-  searchInput.addEventListener('focus', () => { if(searchInput.value.trim()==='') renderRecents(); });
-  clearBtn.addEventListener('click', () => { searchInput.value=''; clearBtn.classList.remove('show'); hideSuggestions(); });
-
-  // ---------------- locate ----------------
-  function locateUser(onDone){
-    if(!navigator.geolocation){ alert('Location is not available on this browser.'); return; }
-    navigator.geolocation.getCurrentPosition(pos => {
-      userLatLng = [pos.coords.latitude, pos.coords.longitude];
-      if(userMarker) map.removeLayer(userMarker);
-      userMarker = L.marker(userLatLng, { icon: userIcon }).addTo(map);
-      if(onDone) onDone();
-    }, () => {
-      alert('Could not get your location. Check Safari location permissions in Settings.');
-    }, { enableHighAccuracy:true, timeout:8000 });
+  // ---------------- pointer handling ----------------
+  function handleDown(e){
+    const xNorm = e.clientX / window.innerWidth;
+    const yNorm = e.clientY / window.innerHeight;
+    noteOn(e.pointerId, xNorm, yNorm);
+    spawnParticles(e.clientX*DPR, e.clientY*DPR, hueForX(xNorm), 18);
   }
-  document.getElementById('locateBtn').addEventListener('click', () => {
-    locateUser(() => map.flyTo(userLatLng, 15, { duration: 0.9 }));
+  function handleMove(e){
+    if(!voices.has(e.pointerId)) return;
+    const xNorm = e.clientX / window.innerWidth;
+    const yNorm = e.clientY / window.innerHeight;
+    noteUpdate(e.pointerId, xNorm, yNorm);
+    spawnParticles(e.clientX*DPR, e.clientY*DPR, hueForX(xNorm), 4);
+  }
+  function handleUp(e){
+    noteOff(e.pointerId);
+  }
+  canvas.addEventListener('pointerdown', handleDown);
+  canvas.addEventListener('pointermove', handleMove);
+  canvas.addEventListener('pointerup', handleUp);
+  canvas.addEventListener('pointercancel', handleUp);
+  canvas.addEventListener('pointerleave', handleUp);
+
+  // ---------------- UI buttons ----------------
+  document.getElementById('muteBtn').addEventListener('click', (e) => {
+    muted = !muted;
+    if(master) master.gain.value = muted ? 0 : 0.8;
+    e.target.textContent = muted ? '🔇' : '🔊';
+  });
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    particles = [];
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0,0,W,H);
+  });
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    const flash = document.getElementById('flash');
+    flash.style.opacity = '0.7';
+    setTimeout(() => flash.style.opacity = '0', 150);
+    const a = document.createElement('a');
+    a.download = 'resonance-' + Date.now() + '.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
   });
 
-  // ---------------- directions ----------------
-  document.getElementById('btnDirections').addEventListener('click', () => {
-    if(!activePlace) return;
-    if(!userLatLng){
-      locateUser(() => getRoute());
+  // ---------------- loop ----------------
+  function loop(){
+    updateParticles();
+    drawParticles();
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  // ---------------- boot / start ----------------
+  document.getElementById('startBtn').addEventListener('click', () => {
+    initAudio();
+    if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
+      DeviceOrientationEvent.requestPermission().then(state => {
+        if(state === 'granted') window.addEventListener('deviceorientation', handleOrientation);
+      }).catch(()=>{});
     } else {
-      getRoute();
+      window.addEventListener('deviceorientation', handleOrientation);
     }
-  });
-
-  async function getRoute(){
-    if(!userLatLng || !activePlace) return;
-    try{
-      const url = `https://router.project-osrm.org/route/v1/driving/${userLatLng[1]},${userLatLng[0]};${activePlace.lon},${activePlace.lat}?overview=full&geometries=geojson`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if(!data.routes || !data.routes.length){ alert('No route found.'); return; }
-      const route = data.routes[0];
-      if(routeLine) map.removeLayer(routeLine);
-      routeLine = L.geoJSON(route.geometry, { style: { color:'#007AFF', weight:6, opacity:0.85, lineCap:'round' } }).addTo(map);
-      map.fitBounds(routeLine.getBounds(), { padding:[60,60] });
-
-      const mins = Math.round(route.duration/60);
-      const miles = (route.distance/1609.34).toFixed(1);
-      document.getElementById('routeTime').textContent = mins + ' min';
-      document.getElementById('routeDist').textContent = miles + ' mi drive';
-      document.getElementById('routeInfo').classList.add('show');
-    }catch(e){
-      alert('Directions unavailable right now — check connection.');
-    }
-  }
-  document.getElementById('endRoute').addEventListener('click', () => {
-    if(routeLine){ map.removeLayer(routeLine); routeLine = null; }
-    document.getElementById('routeInfo').classList.remove('show');
-  });
-
-  // ---------------- save / share ----------------
-  document.getElementById('btnSave').addEventListener('click', () => {
-    if(activePlace){ addRecent(activePlace); document.getElementById('btnSave').querySelector('.circle').style.background = '#34C759'; setTimeout(()=>{ document.getElementById('btnSave').querySelector('.circle').style.background=''; }, 700); }
-  });
-  document.getElementById('btnShare').addEventListener('click', async () => {
-    if(!activePlace) return;
-    const url = `https://www.openstreetmap.org/?mlat=${activePlace.lat}&mlon=${activePlace.lon}#map=16/${activePlace.lat}/${activePlace.lon}`;
-    if(navigator.share){
-      try{ await navigator.share({ title: activePlace.name, text: activePlace.display, url }); }catch(e){}
-    } else {
-      navigator.clipboard?.writeText(url);
-      alert('Link copied to clipboard.');
-    }
-  });
-
-  // tap on map dismisses suggestions/sheet-lite
-  map.on('click', () => hideSuggestions());
-
-  setTimeout(() => {
     const boot = document.getElementById('boot');
     boot.style.opacity = '0';
-    setTimeout(() => boot.remove(), 500);
-  }, 350);
+    setTimeout(() => boot.remove(), 1000);
+  });
+
+  setTimeout(() => {
+    const hint = document.getElementById('hint');
+    if(hint) hint.style.opacity = '0';
+  }, 6000);
 })();
 </script>
 </body>
