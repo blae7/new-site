@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Resonance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --dim: rgba(255,255,255,0.55); --line: rgba(255,255,255,0.14); }
+  :root{ --dim: rgba(255,255,255,0.55); --line: rgba(255,255,255,0.14); --red: #FF453A; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
   html,body{ margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; touch-action:none; }
   canvas{ display:block; position:fixed; inset:0; }
@@ -22,71 +22,172 @@
     font-family:'Fraunces', serif; font-weight:300; font-style:italic;
     font-size: clamp(2.2rem, 8vw, 3.6rem); margin:0; letter-spacing:0.01em;
   }
-  .boot p{ color: var(--dim); font-size:0.78rem; letter-spacing:0.06em; line-height:1.7; max-width:36ch; }
+  .boot p{ color: var(--dim); font-size:0.78rem; letter-spacing:0.06em; line-height:1.7; max-width:38ch; }
   .boot button{
     font-family:'JetBrains Mono'; font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase;
     background: transparent; border:1px solid rgba(255,255,255,0.4); color:#fff;
     border-radius: 999px; padding:16px 36px; cursor:pointer; margin-top:8px;
-    transition: all .25s ease;
   }
   .boot button:active{ background: rgba(255,255,255,0.15); }
 
   .hint{
     position:fixed; top: max(24px, env(safe-area-inset-top)); left:0; right:0;
     text-align:center; z-index:10; pointer-events:none;
-    font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase; color: var(--dim);
+    font-size:0.66rem; letter-spacing:0.1em; text-transform:uppercase; color: var(--dim);
     transition: opacity 1.2s ease;
   }
+  .status{
+    position:fixed; top: max(24px, env(safe-area-inset-top)); right:16px;
+    z-index:15; display:flex; align-items:center; gap:6px;
+    font-size:0.65rem; letter-spacing:0.08em; text-transform:uppercase;
+    background: rgba(255,255,255,0.08); border:1px solid var(--line); border-radius:999px;
+    padding:7px 12px; backdrop-filter: blur(10px); display:none;
+  }
+  .status.show{ display:flex; }
+  .status .dot{ width:7px; height:7px; border-radius:50%; background: var(--red); animation: blink 1s infinite; }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
 
-  .ui{
-    position:fixed; z-index:10; bottom: max(20px, env(safe-area-inset-bottom));
-    left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:14px;
-    pointer-events:none;
+  .bottom-bar{
+    position:fixed; z-index:20; bottom: max(18px, env(safe-area-inset-bottom));
+    left:0; right:0; display:flex; justify-content:center; gap:10px; pointer-events:none;
   }
-  .scales{ display:flex; gap:8px; pointer-events:all; }
-  .scale-btn{
-    font-family:'JetBrains Mono'; font-size:0.65rem; letter-spacing:0.06em; text-transform:uppercase;
-    background: rgba(255,255,255,0.06); border:1px solid var(--line); color: var(--dim);
-    border-radius:999px; padding:9px 15px; cursor:pointer; backdrop-filter: blur(10px);
-  }
-  .scale-btn.active{ background:#fff; color:#000; border-color:#fff; }
-  .icon-row{ display:flex; gap:10px; pointer-events:all; }
   .icon-btn{
-    width:42px; height:42px; border-radius:50%;
-    background: rgba(255,255,255,0.06); border:1px solid var(--line); color:#fff;
+    width:42px; height:42px; border-radius:50%; pointer-events:all;
+    background: rgba(255,255,255,0.07); border:1px solid var(--line); color:#fff;
     display:flex; align-items:center; justify-content:center; cursor:pointer;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px); font-size:1rem;
   }
-  .flash{
-    position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:50;
-    transition: opacity 0.15s ease;
+  .icon-btn.active{ background:#fff; color:#000; }
+  .icon-btn.rec.recording{ background: var(--red); border-color: var(--red); }
+
+  .drawer{
+    position:fixed; z-index:22; left:0; right:0; bottom:0;
+    background: rgba(14,14,18,0.86); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    border-radius: 22px 22px 0 0; border-top:1px solid var(--line);
+    padding: 16px 18px max(24px, env(safe-area-inset-bottom));
+    max-height: 62vh; overflow-y:auto;
+    transform: translateY(110%);
+    transition: transform 0.4s cubic-bezier(.25,1,.5,1);
   }
+  .drawer.show{ transform: translateY(0); }
+  .drawer-handle{ width:36px; height:5px; border-radius:3px; background: var(--line); margin: 2px auto 16px; }
+  .section{ margin-bottom: 18px; }
+  .section-title{ font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color: var(--dim); margin-bottom:9px; }
+  .pill-row{ display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; }
+  .pill{
+    flex-shrink:0; font-family:'JetBrains Mono'; font-size:0.7rem; letter-spacing:0.04em;
+    background: rgba(255,255,255,0.07); border:1px solid var(--line); color: var(--dim);
+    border-radius:999px; padding:9px 15px; cursor:pointer; white-space:nowrap;
+  }
+  .pill.active{ background:#fff; color:#000; border-color:#fff; }
+  .slider-row{ display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .slider-row label{ font-size:0.68rem; color: var(--dim); width:76px; flex-shrink:0; }
+  .slider-row input[type=range]{ flex:1; accent-color:#fff; }
+
+  .flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:50; transition: opacity 0.15s ease; }
 </style>
 </head>
 <body>
 
 <div class="boot" id="boot">
   <h1>Resonance</h1>
-  <p>Touch the screen. Every stroke paints light and plays a note — nothing you play can sound wrong. Tilt the iPad to stir the wind.</p>
+  <p>Touch the screen. Every stroke paints light and plays a note — nothing you play can sound wrong. Tilt the iPad to stir the wind. Open the Studio to reshape the whole instrument.</p>
   <button id="startBtn">Begin</button>
 </div>
 
 <div class="hint" id="hint">touch and drag to play &nbsp;·&nbsp; hold multiple fingers for chords</div>
+<div class="status" id="status"><div class="dot"></div><span id="statusText">Recording</span></div>
 
 <canvas id="c"></canvas>
 <div class="flash" id="flash"></div>
 
-<div class="ui">
-  <div class="scales">
-    <button class="scale-btn active" data-scale="pentatonic">Pentatonic</button>
-    <button class="scale-btn" data-scale="lydian">Lydian</button>
-    <button class="scale-btn" data-scale="minor">Minor</button>
-    <button class="scale-btn" data-scale="wholetone">Whole-tone</button>
+<div class="bottom-bar">
+  <button class="icon-btn" id="studioBtn" title="Studio">🎛</button>
+  <button class="icon-btn rec" id="recBtn" title="Record">⏺</button>
+  <button class="icon-btn" id="replayBtn" title="Replay">▶</button>
+  <button class="icon-btn" id="muteBtn" title="Mute">🔊</button>
+  <button class="icon-btn" id="saveBtn" title="Save snapshot">⬇</button>
+  <button class="icon-btn" id="clearBtn" title="Clear canvas">✕</button>
+</div>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+
+  <div class="section">
+    <div class="section-title">Scale</div>
+    <div class="pill-row" id="scaleRow">
+      <button class="pill active" data-val="pentatonic">Pentatonic</button>
+      <button class="pill" data-val="lydian">Lydian</button>
+      <button class="pill" data-val="minor">Minor</button>
+      <button class="pill" data-val="wholetone">Whole-tone</button>
+      <button class="pill" data-val="chromatic">Chromatic</button>
+    </div>
   </div>
-  <div class="icon-row">
-    <button class="icon-btn" id="muteBtn" title="Mute">🔊</button>
-    <button class="icon-btn" id="saveBtn" title="Save snapshot">⬇</button>
-    <button class="icon-btn" id="clearBtn" title="Clear canvas">✕</button>
+
+  <div class="section">
+    <div class="section-title">Key</div>
+    <div class="pill-row" id="keyRow">
+      <button class="pill" data-val="196">G</button>
+      <button class="pill active" data-val="220">A</button>
+      <button class="pill" data-val="246.94">B</button>
+      <button class="pill" data-val="261.63">C</button>
+      <button class="pill" data-val="293.66">D</button>
+      <button class="pill" data-val="329.63">E</button>
+      <button class="pill" data-val="349.23">F</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Voice</div>
+    <div class="pill-row" id="waveRow">
+      <button class="pill active" data-val="sine">Sine</button>
+      <button class="pill" data-val="triangle">Triangle</button>
+      <button class="pill" data-val="sawtooth">Saw</button>
+      <button class="pill" data-val="square">Square</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Brush</div>
+    <div class="pill-row" id="brushRow">
+      <button class="pill active" data-val="glow">Glow</button>
+      <button class="pill" data-val="sparkle">Sparkle</button>
+      <button class="pill" data-val="ribbon">Ribbon</button>
+      <button class="pill" data-val="comet">Comet</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Symmetry</div>
+    <div class="pill-row" id="symRow">
+      <button class="pill active" data-val="1">Off</button>
+      <button class="pill" data-val="4">4×</button>
+      <button class="pill" data-val="6">6×</button>
+      <button class="pill" data-val="8">8×</button>
+      <button class="pill" data-val="12">12×</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">World</div>
+    <div class="pill-row" id="themeRow">
+      <button class="pill active" data-val="0">Void</button>
+      <button class="pill" data-val="1">Ocean</button>
+      <button class="pill" data-val="2">Dusk</button>
+      <button class="pill" data-val="3">Paper</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Space (delay)</div>
+    <div class="slider-row">
+      <label>Amount</label>
+      <input type="range" id="wetSlider" min="0" max="1" step="0.01" value="0.5">
+    </div>
+    <div class="slider-row">
+      <label>Feedback</label>
+      <input type="range" id="fbSlider" min="0" max="0.7" step="0.01" value="0.38">
+    </div>
   </div>
 </div>
 
@@ -95,30 +196,40 @@
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
   let W, H, DPR;
-  function resize(){
+
+  const THEMES = [
+    { name:'Void',  bg:'#000000', fade:'rgba(0,0,0,0.07)' },
+    { name:'Ocean', bg:'#020814', fade:'rgba(2,8,20,0.07)' },
+    { name:'Dusk',  bg:'#0d0221', fade:'rgba(13,2,33,0.08)' },
+    { name:'Paper', bg:'#F5F0E6', fade:'rgba(245,240,230,0.10)' }
+  ];
+  let themeIdx = 0;
+
+  function resize(keepBg){
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     W = canvas.width = window.innerWidth * DPR;
     H = canvas.height = window.innerHeight * DPR;
     canvas.style.width = window.innerWidth + 'px';
     canvas.style.height = window.innerHeight + 'px';
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = THEMES[themeIdx].bg;
     ctx.fillRect(0,0,W,H);
   }
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', () => resize());
 
-  // ---------------- scales ----------------
+  // ---------------- scales & key ----------------
   const SCALES = {
     pentatonic: [0,2,4,7,9],
     lydian: [0,2,4,6,7,9,11],
     minor: [0,2,3,5,7,8,10],
-    wholetone: [0,2,4,6,8,10]
+    wholetone: [0,2,4,6,8,10],
+    chromatic: [0,1,2,3,4,5,6,7,8,9,10,11]
   };
   let currentScale = 'pentatonic';
-  const ROOT = 220; // A3
+  let ROOT = 220;
   const OCTAVE_RANGE = 3;
 
-  function freqForY(yNorm){ // yNorm: 0 (top) = high, 1 (bottom) = low
+  function freqForY(yNorm){
     const scale = SCALES[currentScale];
     const totalSteps = scale.length * OCTAVE_RANGE;
     const stepFloat = (1 - yNorm) * totalSteps;
@@ -129,26 +240,59 @@
     return ROOT * Math.pow(2, semitone/12);
   }
 
-  document.querySelectorAll('.scale-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentScale = btn.dataset.scale;
+  // ---------------- generic pill-row wiring ----------------
+  function wireRow(id, onSelect){
+    document.querySelectorAll('#'+id+' .pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#'+id+' .pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        onSelect(btn.dataset.val);
+      });
     });
+  }
+  wireRow('scaleRow', v => currentScale = v);
+  wireRow('keyRow', v => ROOT = parseFloat(v));
+  wireRow('waveRow', v => oscType = v);
+  wireRow('brushRow', v => currentBrush = v);
+  wireRow('symRow', v => symmetry = parseInt(v));
+  wireRow('themeRow', v => { themeIdx = parseInt(v); resize(); });
+
+  document.getElementById('wetSlider').addEventListener('input', e => { if(wetGain) wetGain.gain.value = parseFloat(e.target.value); });
+  document.getElementById('fbSlider').addEventListener('input', e => { if(feedbackGain) feedbackGain.gain.value = parseFloat(e.target.value); });
+
+  // ---------------- studio drawer ----------------
+  const drawer = document.getElementById('drawer');
+  const studioBtn = document.getElementById('studioBtn');
+  studioBtn.addEventListener('click', () => {
+    drawer.classList.toggle('show');
+    studioBtn.classList.toggle('active');
   });
 
   // ---------------- wind (device tilt) ----------------
   let wind = { x: 0, y: 0 };
   function handleOrientation(e){
-    const gamma = (e.gamma || 0) / 45;  // left-right
-    const beta = ((e.beta || 0) - 30) / 45; // front-back, offset for natural hold angle
+    const gamma = (e.gamma || 0) / 45;
+    const beta = ((e.beta || 0) - 30) / 45;
     wind.x = Math.max(-1, Math.min(1, gamma)) * 0.035;
     wind.y = Math.max(-1, Math.min(1, beta)) * 0.035;
   }
 
-  // ---------------- particles ----------------
+  // ---------------- brush / particles ----------------
+  let currentBrush = 'glow';
   let particles = [];
-  function spawnParticles(x, y, hue, count){
+
+  function brushParams(){
+    switch(currentBrush){
+      case 'sparkle': return { count:3, sizeMult:0.5, decayMult:2.2 };
+      case 'comet':   return { count:2, sizeMult:1.6, decayMult:0.7 };
+      default:        return { count:1, sizeMult:1, decayMult:1 }; // glow
+    }
+  }
+
+  function spawnParticles(x, y, hue, baseCount){
+    if(currentBrush === 'ribbon') return; // ribbon draws directly, no particles
+    const bp = brushParams();
+    const count = Math.max(1, Math.round(baseCount * bp.count));
     for(let i=0;i<count;i++){
       particles.push({
         x: x + (Math.random()-0.5)*6,
@@ -157,11 +301,45 @@
         vy: (Math.random()-0.5)*0.6,
         hue: hue + (Math.random()-0.5)*20,
         life: 1,
-        decay: 0.004 + Math.random()*0.006,
-        size: (2 + Math.random()*3) * DPR
+        decay: (0.004 + Math.random()*0.006) * bp.decayMult,
+        size: (2 + Math.random()*3) * DPR * bp.sizeMult
       });
     }
   }
+
+  function mirrorPoints(x, y){
+    const pts = [];
+    const cx = W/2, cy = H/2;
+    const dx = x - cx, dy = y - cy;
+    for(let k=0;k<symmetry;k++){
+      const angle = k * (2*Math.PI/symmetry);
+      const rx = dx*Math.cos(angle) - dy*Math.sin(angle);
+      const ry = dx*Math.sin(angle) + dy*Math.cos(angle);
+      pts.push({ x: cx+rx, y: cy+ry });
+    }
+    return pts;
+  }
+
+  function paintAt(xPix, yPix, hue, count){
+    mirrorPoints(xPix, yPix).forEach(p => spawnParticles(p.x, p.y, hue, count));
+  }
+
+  function paintRibbon(x1,y1,x2,y2,hue,speed){
+    const width = Math.max(2, Math.min(10, speed*0.4)) * DPR;
+    const m1 = mirrorPoints(x1,y1), m2 = mirrorPoints(x2,y2);
+    ctx.lineCap = 'round';
+    ctx.globalCompositeOperation = 'lighter';
+    for(let k=0;k<symmetry;k++){
+      ctx.beginPath();
+      ctx.moveTo(m1[k].x, m1[k].y);
+      ctx.lineTo(m2[k].x, m2[k].y);
+      ctx.strokeStyle = `hsla(${hue}, 85%, 65%, 0.8)`;
+      ctx.lineWidth = width;
+      ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
   function updateParticles(){
     for(let i=particles.length-1;i>=0;i--){
       const p = particles[i];
@@ -173,22 +351,38 @@
     }
   }
   function drawParticles(){
-    ctx.fillStyle = 'rgba(0,0,0,0.07)';
+    ctx.fillStyle = THEMES[themeIdx].fade;
     ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation = 'lighter';
     for(const p of particles){
       const alpha = Math.max(0, p.life);
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-      ctx.fillStyle = `hsla(${p.hue}, 85%, 65%, ${alpha})`;
-      ctx.fill();
+      if(currentBrush === 'comet'){
+        const angle = Math.atan2(p.vy, p.vx);
+        const speed = Math.min(4, Math.hypot(p.vx,p.vy));
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(angle);
+        ctx.scale(1 + speed*1.5, 1);
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size, 0, Math.PI*2);
+        ctx.fillStyle = `hsla(${p.hue}, 85%, 65%, ${alpha})`;
+        ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.fillStyle = `hsla(${p.hue}, 85%, 65%, ${alpha})`;
+        ctx.fill();
+      }
     }
     ctx.globalCompositeOperation = 'source-over';
   }
 
   // ---------------- audio engine ----------------
   let actx, master, delayNode, feedbackGain, wetGain, muted = false;
-  const voices = new Map(); // pointerId -> { osc, filter, gain }
+  let oscType = 'sine';
+  let symmetry = 1;
+  const voices = new Map();
 
   function initAudio(){
     actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -236,14 +430,14 @@
     if(!actx) return;
     const freq = freqForY(yNorm);
     const osc = actx.createOscillator();
-    osc.type = 'sine';
+    osc.type = oscType;
     osc.frequency.value = freq;
     const filter = actx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.value = 400 + xNorm*3000;
     const gain = actx.createGain();
     gain.gain.setValueAtTime(0, actx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.22, actx.currentTime + 0.04);
+    gain.gain.linearRampToValueAtTime(0.2, actx.currentTime + 0.04);
     osc.connect(filter); filter.connect(gain); gain.connect(master);
     osc.start();
     voices.set(id, { osc, filter, gain });
@@ -265,23 +459,122 @@
     voices.delete(id);
   }
 
+  function playConfirmChime(){
+    const osc = actx.createOscillator();
+    const g = actx.createGain();
+    osc.type = 'sine'; osc.frequency.value = 660;
+    g.gain.setValueAtTime(0, actx.currentTime);
+    g.gain.linearRampToValueAtTime(0.35, actx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.6);
+    osc.connect(g); g.connect(master);
+    osc.start(); osc.stop(actx.currentTime + 0.65);
+  }
+
+  // ---------------- record / replay ----------------
+  let recording = false, replaying = false;
+  let recordedEvents = [], recordStart = 0, recordAutoStop = null;
+  let replayTimers = [];
+  const lastPositions = new Map();
+
+  const statusEl = document.getElementById('status');
+  const statusText = document.getElementById('statusText');
+  const recBtn = document.getElementById('recBtn');
+  const replayBtn = document.getElementById('replayBtn');
+
+  function toggleRecord(){
+    if(replaying) return;
+    recording = !recording;
+    recBtn.classList.toggle('recording', recording);
+    if(recording){
+      recordedEvents = [];
+      recordStart = performance.now();
+      statusText.textContent = 'Recording';
+      statusEl.classList.add('show');
+      recordAutoStop = setTimeout(() => { if(recording) toggleRecord(); }, 30000);
+    } else {
+      clearTimeout(recordAutoStop);
+      statusEl.classList.remove('show');
+    }
+  }
+  recBtn.addEventListener('click', toggleRecord);
+
+  function stopReplay(){
+    replaying = false;
+    replayTimers.forEach(t => clearTimeout(t));
+    replayTimers = [];
+    voices.forEach((v, id) => noteOff(id));
+    statusEl.classList.remove('show');
+  }
+
+  replayBtn.addEventListener('click', () => {
+    if(replaying){ stopReplay(); return; }
+    if(!actx || recordedEvents.length === 0) return;
+    replaying = true;
+    statusText.textContent = 'Replaying';
+    statusEl.classList.add('show');
+    recordedEvents.forEach(ev => {
+      const timer = setTimeout(() => {
+        const x = ev.xNorm * window.innerWidth;
+        const y = ev.yNorm * window.innerHeight;
+        const rid = 'replay-' + ev.id;
+        if(ev.type === 'down'){
+          noteOn(rid, ev.xNorm, ev.yNorm);
+          paintAt(x*DPR, y*DPR, hueForX(ev.xNorm), 18);
+          lastPositions.set(rid, {x:x*DPR, y:y*DPR});
+        } else if(ev.type === 'move'){
+          noteUpdate(rid, ev.xNorm, ev.yNorm);
+          const last = lastPositions.get(rid) || {x:x*DPR,y:y*DPR};
+          if(currentBrush === 'ribbon'){
+            const speed = Math.hypot(x*DPR-last.x, y*DPR-last.y);
+            paintRibbon(last.x, last.y, x*DPR, y*DPR, hueForX(ev.xNorm), speed);
+          } else {
+            paintAt(x*DPR, y*DPR, hueForX(ev.xNorm), 4);
+          }
+          lastPositions.set(rid, {x:x*DPR, y:y*DPR});
+        } else if(ev.type === 'up'){
+          noteOff(rid);
+          lastPositions.delete(rid);
+        }
+      }, ev.t);
+      replayTimers.push(timer);
+    });
+    const totalTime = recordedEvents.length ? recordedEvents[recordedEvents.length-1].t + 300 : 0;
+    replayTimers.push(setTimeout(() => { replaying = false; statusEl.classList.remove('show'); }, totalTime));
+  });
+
   // ---------------- pointer handling ----------------
   function handleDown(e){
     if(actx && actx.state === 'suspended') actx.resume();
     const xNorm = e.clientX / window.innerWidth;
     const yNorm = e.clientY / window.innerHeight;
     noteOn(e.pointerId, xNorm, yNorm);
-    spawnParticles(e.clientX*DPR, e.clientY*DPR, hueForX(xNorm), 18);
+    paintAt(e.clientX*DPR, e.clientY*DPR, hueForX(xNorm), 18);
+    lastPositions.set(e.pointerId, { x: e.clientX*DPR, y: e.clientY*DPR });
+    if(recording) recordedEvents.push({ t: performance.now()-recordStart, type:'down', id:e.pointerId, xNorm, yNorm });
   }
   function handleMove(e){
     if(!voices.has(e.pointerId)) return;
     const xNorm = e.clientX / window.innerWidth;
     const yNorm = e.clientY / window.innerHeight;
     noteUpdate(e.pointerId, xNorm, yNorm);
-    spawnParticles(e.clientX*DPR, e.clientY*DPR, hueForX(xNorm), 4);
+    const last = lastPositions.get(e.pointerId) || { x:e.clientX*DPR, y:e.clientY*DPR };
+    if(currentBrush === 'ribbon'){
+      const speed = Math.hypot(e.clientX*DPR-last.x, e.clientY*DPR-last.y);
+      paintRibbon(last.x, last.y, e.clientX*DPR, e.clientY*DPR, hueForX(xNorm), speed);
+    } else {
+      paintAt(e.clientX*DPR, e.clientY*DPR, hueForX(xNorm), 4);
+    }
+    lastPositions.set(e.pointerId, { x: e.clientX*DPR, y: e.clientY*DPR });
+    if(recording) recordedEvents.push({ t: performance.now()-recordStart, type:'move', id:e.pointerId, xNorm, yNorm });
   }
   function handleUp(e){
+    if(recording && voices.has(e.pointerId)){
+      const xNorm = e.clientX / window.innerWidth;
+      const yNorm = e.clientY / window.innerHeight;
+      recordedEvents.push({ t: performance.now()-recordStart, type:'up', id:e.pointerId, xNorm, yNorm });
+    }
     noteOff(e.pointerId);
+    lastPositions.delete(e.pointerId);
   }
   canvas.addEventListener('pointerdown', handleDown);
   canvas.addEventListener('pointermove', handleMove);
@@ -289,7 +582,7 @@
   canvas.addEventListener('pointercancel', handleUp);
   canvas.addEventListener('pointerleave', handleUp);
 
-  // ---------------- UI buttons ----------------
+  // ---------------- other UI buttons ----------------
   document.getElementById('muteBtn').addEventListener('click', (e) => {
     muted = !muted;
     if(master) master.gain.value = muted ? 0 : 0.8;
@@ -297,7 +590,7 @@
   });
   document.getElementById('clearBtn').addEventListener('click', () => {
     particles = [];
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = THEMES[themeIdx].bg;
     ctx.fillRect(0,0,W,H);
   });
   document.getElementById('saveBtn').addEventListener('click', () => {
@@ -319,23 +612,9 @@
   loop();
 
   // ---------------- boot / start ----------------
-  function playConfirmChime(){
-    const osc = actx.createOscillator();
-    const g = actx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 660;
-    g.gain.setValueAtTime(0, actx.currentTime);
-    g.gain.linearRampToValueAtTime(0.35, actx.currentTime + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.6);
-    osc.connect(g); g.connect(master);
-    osc.start();
-    osc.stop(actx.currentTime + 0.65);
-  }
-
   document.getElementById('startBtn').addEventListener('click', () => {
     initAudio();
-    // Safari/iPadOS sometimes leaves the context suspended even after a user gesture — force it awake.
-    actx.resume().then(() => { playConfirmChime(); }).catch(() => { playConfirmChime(); });
+    actx.resume().then(playConfirmChime).catch(playConfirmChime);
     if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
       DeviceOrientationEvent.requestPermission().then(state => {
         if(state === 'granted') window.addEventListener('deviceorientation', handleOrientation);
