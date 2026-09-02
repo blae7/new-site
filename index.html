@@ -2,559 +2,587 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Deep Time</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Chronos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --text:#F4F2EC; --dim: rgba(244,242,236,0.62); --line: rgba(244,242,236,0.16);
-    --panel: rgba(10,10,14,0.6);
-  }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-  html{ scroll-behavior:smooth; }
-  body{ margin:0; background:#050507; color:var(--text); font-family:'Space Grotesk', sans-serif; overflow-x:hidden; }
+  :root{ --dim: rgba(244,242,236,0.62); --line: rgba(244,242,236,0.16); --panel: rgba(10,10,16,0.62); }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+  html,body{ margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#04040a; touch-action:none; }
+  body{ font-family:'Space Grotesk', sans-serif; color:#F4F2EC; }
   .mono{ font-family:'JetBrains Mono', monospace; }
-  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+  canvas{ display:block; }
 
-  /* ---------- intro ---------- */
-  .intro{
-    position:fixed; inset:0; z-index:200; background:#050507;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
-    text-align:center; padding:0 8vw; transition: opacity 0.9s ease;
+  .boot{
+    position:fixed; inset:0; z-index:200; background:#04040a;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    text-align:center; padding:0 8vw; transition: opacity .8s ease;
   }
-  .intro h1{ font-family:'Fraunces', serif; font-weight:300; font-style:italic; font-size:clamp(2.4rem,8vw,4rem); margin:0; }
-  .intro p{ color:var(--dim); max-width:44ch; line-height:1.7; font-size:0.92rem; }
-  .intro .note{ font-size:0.72rem; color:rgba(244,242,236,0.4); max-width:42ch; }
-  .intro button{
+  .boot h1{ font-family:'Fraunces', serif; font-weight:300; font-style:italic; font-size:clamp(2.2rem,8vw,3.6rem); margin:0; }
+  .boot p{ color:var(--dim); max-width:40ch; line-height:1.7; font-size:0.85rem; }
+  .boot button{
     font-family:'JetBrains Mono'; font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase;
-    background:#F4F2EC; color:#050507; border:none; border-radius:999px; padding:16px 38px; cursor:pointer; margin-top:6px;
+    background:#F4F2EC; color:#04040a; border:none; border-radius:999px; padding:16px 36px; cursor:pointer; margin-top:6px;
   }
 
-  /* ---------- nav ---------- */
-  nav{
-    position:fixed; top: max(14px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
-    z-index:50; display:flex; gap:6px; background:var(--panel); backdrop-filter:blur(16px);
-    border:1px solid var(--line); border-radius:999px; padding:6px; max-width:94vw; overflow-x:auto;
+  .hud-top{
+    position:fixed; z-index:20; top: max(16px, env(safe-area-inset-top)); left:16px; right:16px;
+    display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none;
   }
-  .nav-dot{
-    flex-shrink:0; width:9px; height:9px; border-radius:50%; background:rgba(244,242,236,0.25);
-    border:none; cursor:pointer; margin:6px 5px;
-  }
-  .nav-dot.active{ background:#fff; transform:scale(1.3); }
+  .era-title{ background:var(--panel); backdrop-filter:blur(16px); border:1px solid var(--line); border-radius:16px; padding:12px 18px; pointer-events:all; }
+  .era-title .name{ font-family:'Fraunces', serif; font-weight:500; font-size:1.4rem; margin:0; }
+  .era-title .tag{ font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--dim); }
+  .era-title .years{ font-size:0.7rem; color:var(--dim); margin-top:2px; }
 
-  /* ---------- era sections ---------- */
-  .era{
-    position:relative; min-height:100svh; display:flex; align-items:center;
-    padding: 14vw 7vw 10vw; overflow:hidden;
+  .spawn-buttons{ display:flex; flex-direction:column; gap:8px; pointer-events:all; }
+  .spawn-btn{
+    font-family:'JetBrains Mono'; font-size:0.7rem; letter-spacing:0.04em; text-transform:uppercase;
+    background: var(--panel); backdrop-filter:blur(16px); border:1px solid var(--line); color:#fff;
+    border-radius:999px; padding:11px 16px; cursor:pointer; display:flex; align-items:center; gap:8px;
   }
-  .era canvas{ position:absolute; inset:0; width:100%; height:100%; z-index:0; }
-  .era::after{
-    content:''; position:absolute; inset:0; z-index:1;
-    background: linear-gradient(180deg, rgba(5,5,7,0.35), rgba(5,5,7,0.75) 80%);
-  }
-  .era-content{ position:relative; z-index:2; max-width:640px; opacity:0; transform:translateY(30px); transition: opacity .9s ease, transform .9s ease; }
-  .era.in .era-content{ opacity:1; transform:translateY(0); }
-  .era-eyebrow{ font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:0.8rem; }
-  .era h2{ font-family:'Fraunces', serif; font-weight:500; font-size:clamp(2.2rem,6vw,3.6rem); margin:0 0 0.6rem; }
-  .era .range{ font-size:0.85rem; color:var(--dim); margin-bottom:1.3rem; }
-  .era p.summary{ font-size:1.02rem; line-height:1.7; color:#E7E5DE; max-width:56ch; margin-bottom:1.6rem; }
+  .spawn-btn.active{ background:#F4F2EC; color:#04040a; }
 
-  .add-btn{
-    font-family:'JetBrains Mono'; font-size:0.72rem; letter-spacing:0.06em; text-transform:uppercase;
-    background: var(--accent); color:#0a0a0e; font-weight:700; border:none; border-radius:999px;
-    padding:12px 22px; cursor:pointer;
+  .toast-stack{ position:fixed; z-index:40; top: max(100px, calc(16px + env(safe-area-inset-top) + 66px)); left:50%; transform:translateX(-50%); display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; width:min(90vw, 420px); }
+  .toast{
+    background: rgba(20,20,28,0.88); backdrop-filter:blur(14px); border:1px solid var(--line);
+    border-radius:14px; padding:11px 16px; font-size:0.82rem; text-align:center;
+    opacity:0; transform:translateY(-10px); transition: all .35s ease; width:100%;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+
+  .placement-hint{
+    position:fixed; z-index:20; bottom:158px; left:0; right:0; text-align:center;
+    font-size:0.72rem; color:var(--dim); pointer-events:none; transition:opacity .3s ease;
   }
 
-  .char-gallery{ display:flex; gap:10px; flex-wrap:wrap; margin-top:1.4rem; }
-  .char-card{
-    display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.06);
-    border:1px solid var(--line); border-radius:14px; padding:6px 12px 6px 6px;
+  .timeline-wrap{
+    position:fixed; z-index:20; bottom: max(18px, env(safe-area-inset-bottom)); left:16px; right:16px;
+    background: var(--panel); backdrop-filter:blur(18px); border:1px solid var(--line); border-radius:20px;
+    padding: 14px 18px 12px;
   }
-  .char-card svg{ width:34px; height:34px; }
-  .char-card .name{ font-size:0.82rem; font-weight:700; }
-  .char-card .traits{ font-size:0.66rem; color:var(--dim); }
-
-  .ripple-box{
-    margin-top:1.8rem; padding:16px 18px; border-radius:16px;
-    background: rgba(255,255,255,0.05); border:1px dashed rgba(244,242,236,0.3);
+  .era-ticks{ display:flex; justify-content:space-between; margin-bottom:6px; }
+  .era-tick{ font-size:0.6rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--dim); cursor:pointer; text-align:center; flex:1; }
+  .era-tick.active{ color:#fff; font-weight:700; }
+  input#timeline{
+    width:100%; -webkit-appearance:none; appearance:none; height:5px; border-radius:3px;
+    background: linear-gradient(90deg, #FF6B35, #BFD3E3, #C2A66B, #8A8A8F, #2E6F9E);
+    outline:none; margin: 8px 0 2px;
   }
-  .ripple-box .rb-label{ font-size:0.66rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; font-weight:700; }
-  .ripple-line{ display:flex; align-items:flex-start; gap:10px; font-size:0.86rem; color:#E7E5DE; line-height:1.55; padding:8px 0; border-top:1px solid rgba(244,242,236,0.08); }
-  .ripple-line:first-of-type{ border-top:none; }
-  .ripple-line svg{ width:22px; height:22px; flex-shrink:0; margin-top:2px; }
-
-  /* ---------- modal ---------- */
-  .modal-overlay{
-    position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
-    display:none; align-items:flex-end; justify-content:center;
+  input#timeline::-webkit-slider-thumb{
+    -webkit-appearance:none; width:26px; height:26px; border-radius:50%;
+    background:#fff; border:3px solid #04040a; cursor:pointer; margin-top:-1px;
   }
-  .modal-overlay.show{ display:flex; }
-  .modal{
-    width:100%; max-width:520px; background:#111116; border-radius:24px 24px 0 0;
-    padding: 20px 22px max(26px, env(safe-area-inset-bottom));
-    max-height:82vh; overflow-y:auto;
-    transform: translateY(100%); transition: transform 0.4s cubic-bezier(.25,1,.5,1);
-  }
-  .modal-overlay.show .modal{ transform: translateY(0); }
-  .modal-handle{ width:36px; height:5px; border-radius:3px; background:var(--line); margin:2px auto 16px; }
-  .modal h3{ font-family:'Fraunces', serif; font-weight:500; font-size:1.5rem; margin:0 0 4px; }
-  .modal .sub{ font-size:0.8rem; color:var(--dim); margin-bottom:18px; }
-  .field-label{ font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--dim); margin:16px 0 8px; }
-  .modal input[type=text]{
-    width:100%; background:rgba(255,255,255,0.07); border:1px solid var(--line); border-radius:12px;
-    padding:13px 14px; color:#fff; font-family:inherit; font-size:0.95rem;
-  }
-  .pill-row{ display:flex; gap:8px; flex-wrap:wrap; }
-  .pill{
-    font-family:'JetBrains Mono'; font-size:0.72rem; background:rgba(255,255,255,0.06); border:1px solid var(--line);
-    color:var(--dim); border-radius:999px; padding:9px 15px; cursor:pointer;
-  }
-  .pill.active{ background:#fff; color:#0a0a0e; border-color:#fff; }
-  .modal-actions{ display:flex; gap:10px; margin-top:22px; }
-  .modal-actions button{ flex:1; font-family:'JetBrains Mono'; font-size:0.75rem; letter-spacing:0.06em; text-transform:uppercase; border-radius:12px; padding:14px; cursor:pointer; border:none; }
-  #cancelBtn{ background:rgba(255,255,255,0.08); color:#fff; }
-  #createBtn{ background:#fff; color:#0a0a0e; font-weight:700; }
-
-  footer{ padding:8vw 7vw 14vw; text-align:center; position:relative; }
-  footer h2{ font-family:'Fraunces', serif; font-weight:300; font-style:italic; font-size:clamp(1.6rem,4vw,2.4rem); margin-bottom:1rem; }
-  footer p{ color:var(--dim); font-size:0.85rem; max-width:44ch; margin:0 auto 1.6rem; line-height:1.6; }
-  #resetBtn{ font-family:'JetBrains Mono'; font-size:0.7rem; letter-spacing:0.06em; text-transform:uppercase; background:rgba(255,255,255,0.08); color:#fff; border:none; border-radius:999px; padding:11px 20px; cursor:pointer; }
 </style>
 </head>
 <body>
 
-<div class="intro" id="intro">
-  <h1>Deep Time</h1>
-  <p>4.6 billion years of Earth's history, from molten rock to right now — scroll through it, and at any point in time, invent a character of your own and watch an imagined ripple spread forward through everything after it.</p>
-  <p class="note">The eras and dates are real. The ripples your characters cause are generative fiction, built fresh in your browser — a playful "what if," not a science claim.</p>
-  <button id="beginBtn">Begin the Journey</button>
+<div class="boot" id="boot">
+  <h1>Chronos</h1>
+  <p>A living globe spanning 230 million years. Drag time forward or back, then tap the surface to spawn a human or a dinosaur — and watch the era decide what happens next.</p>
+  <button id="startBtn">Enter</button>
 </div>
 
-<nav id="nav"></nav>
-<main id="eras"></main>
-
-<footer>
-  <h2>The story is yours from here.</h2>
-  <p>Every character you've added is saved on this device. Come back anytime and your timeline will still be exactly as you left it.</p>
-  <button id="resetBtn">Reset My Timeline</button>
-</footer>
-
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <h3 id="modalEraName">Add a Character</h3>
-    <div class="sub">Give this era a creature of your own making.</div>
-
-    <div class="field-label">Name</div>
-    <input type="text" id="charName" placeholder="e.g. Vexil, Marrow, Thistle…" maxlength="24">
-
-    <div class="field-label">Diet</div>
-    <div class="pill-row" id="dietRow">
-      <button class="pill active" data-val="Herbivore">Herbivore</button>
-      <button class="pill" data-val="Carnivore">Carnivore</button>
-      <button class="pill" data-val="Omnivore">Omnivore</button>
-    </div>
-
-    <div class="field-label">Size</div>
-    <div class="pill-row" id="sizeRow">
-      <button class="pill" data-val="Tiny">Tiny</button>
-      <button class="pill active" data-val="Medium">Medium</button>
-      <button class="pill" data-val="Massive">Massive</button>
-    </div>
-
-    <div class="field-label">Traits (up to 3)</div>
-    <div class="pill-row" id="traitRow">
-      <button class="pill" data-val="Winged">Winged</button>
-      <button class="pill" data-val="Armored">Armored</button>
-      <button class="pill" data-val="Fire-breathing">Fire-breathing</button>
-      <button class="pill" data-val="Bioluminescent">Bioluminescent</button>
-      <button class="pill" data-val="Venomous">Venomous</button>
-      <button class="pill" data-val="Super-fast">Super-fast</button>
-    </div>
-
-    <div class="modal-actions">
-      <button id="cancelBtn">Cancel</button>
-      <button id="createBtn">Create &amp; Release</button>
-    </div>
+<div class="hud-top">
+  <div class="era-title">
+    <div class="name" id="eraName">Mesozoic</div>
+    <div class="tag" id="eraTag">Age of Dinosaurs</div>
+    <div class="years" id="eraYears">230 – 66 million years ago</div>
+  </div>
+  <div class="spawn-buttons">
+    <button class="spawn-btn" id="spawnHumanBtn">🧍 Spawn Human</button>
+    <button class="spawn-btn" id="spawnDinoBtn">🦖 Spawn Dinosaur</button>
   </div>
 </div>
 
+<div class="toast-stack" id="toastStack"></div>
+<div class="placement-hint" id="placementHint" style="opacity:0;">Tap anywhere on the globe to place it</div>
+
+<div class="timeline-wrap">
+  <div class="era-ticks" id="eraTicks"></div>
+  <input type="range" id="timeline" min="0" max="4" step="1" value="0">
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 (function(){
+  const DEG2RAD = Math.PI/180;
+  const R = 5; // globe radius
+
+  // ---------------- era config ----------------
   const ERAS = [
-    { id:'hadean', name:'Hadean Eon', range:'4.6 – 4 billion years ago', accent:'#FF6B35',
-      summary:"Earth forms from cosmic dust and debris, then collides with a Mars-sized world — the wreckage becomes the Moon. The surface is an ocean of molten rock beneath a thick, toxic sky.",
-      move:'ember' },
-    { id:'archean', name:'Archean Eon', range:'4 – 2.5 billion years ago', accent:'#2E86AB',
-      summary:"The crust finally cools into solid rock, and the first oceans form. In shallow water, the earliest life appears — simple single-celled microbes, among them cyanobacteria that will quietly change the planet forever.",
-      move:'rise' },
-    { id:'proterozoic', name:'Proterozoic Eon', range:'2.5 billion – 541 million years ago', accent:'#06A77D',
-      summary:"Photosynthesis floods the atmosphere with oxygen for the first time — the Great Oxidation Event. Complex, multicellular life slowly emerges, setting the stage for an explosion of diversity.",
-      move:'rise' },
-    { id:'paleozoic', name:'Paleozoic Era', range:'541 – 252 million years ago', accent:'#C9A227',
-      summary:"The Cambrian Explosion produces nearly every major animal body plan within a geological eyeblink. Life crawls onto land, forests spread — until the Permian mass extinction wipes out 90% of all species.",
-      move:'swim' },
-    { id:'mesozoic', name:'Mesozoic Era', range:'252 – 66 million years ago', accent:'#C94C4C',
-      summary:"The age of dinosaurs. From towering sauropods to fearsome predators, reptiles dominate land, sea, and sky for over 180 million years — until an asteroid ends their reign in a single catastrophic day.",
-      move:'meteor' },
-    { id:'cenozoic', name:'Cenozoic Era', range:'66 million – 11,700 years ago', accent:'#8FA6C9',
-      summary:"With the dinosaurs gone, mammals diversify explosively. Grasslands spread, ice ages come and go, and eventually a small, clever branch of primates begins walking upright on the plains of Africa.",
-      move:'fall' },
-    { id:'anthropocene', name:'Human Era', range:'11,700 years ago — today', accent:'#F2C14E',
-      summary:"Agriculture takes root, cities rise, and in the blink of geological time humanity reshapes the entire planet — building civilizations, splitting the atom, and reaching beyond Earth itself.",
-      move:'twinkle' }
+    { id:0, name:'Mesozoic', tag:'Age of Dinosaurs', years:'230 – 66 million years ago',
+      color:0x5C7A3F, defenseLevel:0, successChance:0,
+      structures:[
+        {shape:'cone', count:10, color:0x6B4A2E, hMin:0.6,hMax:1.3, rMin:0.25,rMax:0.45},
+        {shape:'cone', count:4,  color:0x8B2E2E, hMin:0.9,hMax:1.4, rMin:0.3,rMax:0.4},
+        {shape:'cone', count:14, color:0x3F7D32, hMin:0.2,hMax:0.4, rMin:0.1,rMax:0.16}
+      ], ambientCount:3 },
+    { id:1, name:'Ice Age', tag:'Glacial Period', years:'2.6 million – 11,700 years ago',
+      color:0xBFD3E3, defenseLevel:1, successChance:0.18,
+      structures:[
+        {shape:'cone', count:16, color:0xE8F0F7, hMin:0.5,hMax:1.1, rMin:0.18,rMax:0.3},
+        {shape:'cone', count:8,  color:0x2F3B2A, hMin:0.25,hMax:0.4, rMin:0.1,rMax:0.15}
+      ], ambientCount:2 },
+    { id:2, name:'Antiquity', tag:'Rise of Civilization', years:'3000 BCE – 500 CE',
+      color:0xC2A66B, defenseLevel:2, successChance:0.45,
+      structures:[
+        {shape:'cone', count:3,  color:0xD8C08A, hMin:0.7,hMax:1.0, rMin:0.35,rMax:0.5},
+        {shape:'box',  count:10, color:0xA9835A, hMin:0.25,hMax:0.4, rMin:0.15,rMax:0.2},
+        {shape:'box',  count:6,  color:0x9C9C94, hMin:0.4,hMax:0.6, rMin:0.2,rMax:0.28}
+      ], ambientCount:3 },
+    { id:3, name:'Industrial Era', tag:'Age of Machines', years:'1760 – 1950',
+      color:0x8A8A8F, defenseLevel:3, successChance:0.75,
+      structures:[
+        {shape:'box', count:9, color:0x5C5C63, hMin:0.5,hMax:0.8, rMin:0.2,rMax:0.28},
+        {shape:'box', count:8, color:0x6E6E76, hMin:0.8,hMax:1.3, rMin:0.15,rMax:0.2},
+        {shape:'cylinder', count:9, color:0x3A3A3E, hMin:0.5,hMax:0.7, rMin:0.05,rMax:0.07}
+      ], ambientCount:3 },
+    { id:4, name:'Modern Era', tag:'Present Day', years:'2000 — Today',
+      color:0x2E6F9E, defenseLevel:5, successChance:0.97,
+      structures:[
+        {shape:'box', count:16, color:0x8FA8B8, hMin:0.8,hMax:1.8, rMin:0.13,rMax:0.2},
+        {shape:'box', count:6,  color:0xC9CFD6, hMin:0.3,hMax:0.5, rMin:0.2,rMax:0.3}
+      ], ambientCount:4 }
   ];
+  const DEFENDER_STYLE = {
+    1: { label:'hunters',  color:0x8B6B4A },
+    2: { label:'warriors', color:0xC9A24A },
+    3: { label:'soldiers', color:0x5A6B4E },
+    4: { label:'armored units', color:0x4A4E58 },
+    5: { label:'military forces', color:0x3A4650 }
+  };
+  const SUCCESS_MESSAGES = {
+    1: '🔥 Your hunters scattered in terror — the dinosaur vanished into the ice before anyone could react.',
+    2: '⚔️ After a desperate struggle, your warriors drove the beast off with spears and fire.',
+    3: '💥 Riflemen and a field cannon brought the creature down after a fierce engagement.',
+    4: '🎖️ Armored units neutralized the threat with coordinated fire.',
+    5: '🚀 Modern military forces neutralized the dinosaur in minutes with air support.'
+  };
+  const FAIL_MESSAGES = {
+    1: '❄️ The dinosaur shrugged off every spear and vanished into a blizzard.',
+    2: '🏚️ The village was overrun — survivors fled as the creature rampaged through, then it wandered off.',
+    3: '🚂 It smashed through a rail line before escaping into the countryside.',
+    4: '🏙️ It broke through the perimeter and disappeared into the hills before reinforcements arrived.',
+    5: '🌆 It evaded interception and vanished into the wilderness — a wild retreat, not a defeat.'
+  };
 
-  const STORAGE_KEY = 'deeptime-characters-v1';
+  let currentEraIdx = 0;
+  let structureGroup = new THREE.Group();
+  let ambientCreatures = [];   // {group,lat,lon,targetLat,targetLon,speed,kind,state,id}
+  let activeEntities = [];     // user-spawned human/dinosaur entities
+  let spawnMode = null;        // 'human' | 'dinosaur' | null
+  let idCounter = 0;
 
-  const RIPPLE_OUTCOMES = [
-    "its descendants quietly out-compete a rival species, and the fossil record gains a strange new branch.",
-    "an entire ecosystem reorganizes around it, and a coastline forest grows taller than it ever did.",
-    "a predator that never existed in the real timeline appears, hunting in its shadow.",
-    "the climate shifts almost imperceptibly, nudging an ice age forward by a few thousand years.",
-    "a distant relative survives an extinction event it wasn't supposed to.",
-    "an unlikely alliance forms between species that, in the real timeline, never crossed paths.",
-    "its migration carves a new path that later becomes a river valley teeming with life.",
-    "a rival lineage goes extinct a little earlier, leaving a gap that something unexpected fills.",
-    "its bones, millions of years later, confuse paleontologists who find no explanation for them.",
-    "one of its traits echoes forward, showing up in a completely unrelated species by convergent evolution."
-  ];
-
-  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
-  function loadData(){
-    try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }catch(e){ return {}; }
+  // ---------------- geo helpers ----------------
+  function latLonToVector3(lat, lon, radius){
+    const phi = (90-lat) * DEG2RAD;
+    const theta = (lon+180) * DEG2RAD;
+    return new THREE.Vector3(
+      -radius * Math.sin(phi)*Math.cos(theta),
+      radius * Math.cos(phi),
+      radius * Math.sin(phi)*Math.sin(theta)
+    );
   }
-  function saveData(data){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-  let store = loadData(); // { eraId: [ {id,name,diet,size,traits,svg} ] }
-  ERAS.forEach(e => { if(!store[e.id]) store[e.id] = []; });
+  function vector3ToLatLon(v){
+    const n = v.clone().normalize();
+    const phi = Math.acos(Math.max(-1,Math.min(1,n.y)));
+    const lat = 90 - phi*180/Math.PI;
+    let thetaDeg = Math.atan2(n.z, -n.x) * 180/Math.PI;
+    let lon = thetaDeg - 180;
+    if(lon < -180) lon += 360;
+    if(lon > 180) lon -= 360;
+    return { lat, lon };
+  }
+  function orientToNormal(obj, normal){
+    const up = new THREE.Vector3(0,1,0);
+    obj.quaternion.setFromUnitVectors(up, normal.clone().normalize());
+  }
+  function randLat(){ return Math.asin(2*Math.random()-1) * 180/Math.PI; }
+  function randLon(){ return Math.random()*360-180; }
 
-  // ---------------- creature SVG generator ----------------
-  function creatureSVG(diet, size, traits){
-    const dietColor = { Herbivore:'#4CAF50', Carnivore:'#E53935', Omnivore:'#FF9800' }[diet];
-    const scale = { Tiny:0.7, Medium:1, Massive:1.3 }[size];
-    const rx = 34*scale, ry = 24*scale, cx=60, cy=64;
-    let parts = '';
+  // ---------------- three.js setup ----------------
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 4, 13);
 
-    if(traits.includes('Super-fast')){
-      parts += `<g opacity="0.35" stroke="${dietColor}" stroke-width="3">
-        <line x1="${cx-rx-6}" y1="${cy-6}" x2="${cx-rx-22}" y2="${cy-6}"/>
-        <line x1="${cx-rx-6}" y1="${cy}" x2="${cx-rx-26}" y2="${cy}"/>
-        <line x1="${cx-rx-6}" y1="${cy+6}" x2="${cx-rx-22}" y2="${cy+6}"/>
-      </g>`;
-    }
-    if(traits.includes('Winged')){
-      parts += `<path d="M${cx-10} ${cy-10} Q ${cx-46} ${cy-40} ${cx-28} ${cy+6} Q ${cx-16} ${cy-2} ${cx-10} ${cy-10}" fill="${dietColor}" opacity="0.55"/>
-      <path d="M${cx+10} ${cy-10} Q ${cx+46} ${cy-40} ${cx+28} ${cy+6} Q ${cx+16} ${cy-2} ${cx+10} ${cy-10}" fill="${dietColor}" opacity="0.55"/>`;
-    }
-    parts += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${dietColor}"/>`;
-    if(traits.includes('Armored')){
-      let spikes = '';
-      for(let i=-2;i<=2;i++){
-        const sx = cx + i*(rx/2.6);
-        spikes += `<polygon points="${sx-5},${cy-ry+4} ${sx+5},${cy-ry+4} ${sx},${cy-ry-10}" fill="#cfcfd6"/>`;
-      }
-      parts += spikes;
-    }
-    // eyes
-    parts += `<circle cx="${cx+rx*0.45}" cy="${cy-4}" r="5" fill="#fff"/><circle cx="${cx+rx*0.45+1.5}" cy="${cy-4}" r="2.4" fill="#111"/>`;
-    if(traits.includes('Fire-breathing')){
-      parts += `<polygon points="${cx+rx+2},${cy} ${cx+rx+18},${cy-6} ${cx+rx+14},${cy} ${cx+rx+20},${cy+6}" fill="#FF9800"/>
-      <polygon points="${cx+rx+2},${cy} ${cx+rx+14},${cy-3} ${cx+rx+16},${cy+3}" fill="#FFEB3B"/>`;
-    }
-    if(traits.includes('Venomous')){
-      parts += `<circle cx="${cx-rx*0.3}" cy="${cy+ry-4}" r="4" fill="#7CFC00" opacity="0.85"/>`;
-    }
-    if(traits.includes('Bioluminescent')){
-      for(let i=0;i<5;i++){
-        const bx = cx - rx*0.6 + Math.random()*rx*1.2;
-        const by = cy - ry*0.5 + Math.random()*ry;
-        parts += `<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="2.2" fill="#7CF6D9"/>`;
-      }
-    }
-    return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${parts}</svg>`;
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 7;
+  controls.maxDistance = 24;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.35;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+  sun.position.set(8,10,6);
+  scene.add(sun);
+
+  // starfield
+  const starGeo = new THREE.BufferGeometry();
+  const starPositions = [];
+  for(let i=0;i<1200;i++){
+    const r = 60 + Math.random()*40;
+    const lat = randLat(), lon = randLon();
+    const v = latLonToVector3(lat, lon, r);
+    starPositions.push(v.x, v.y, v.z);
+  }
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color:0xffffff, size:0.35, transparent:true, opacity:0.7 }));
+  scene.add(stars);
+
+  const globeGeo = new THREE.SphereGeometry(R, 48, 48);
+  const globeMat = new THREE.MeshStandardMaterial({ color: ERAS[0].color, roughness:0.85, metalness:0.05 });
+  const globe = new THREE.Mesh(globeGeo, globeMat);
+  scene.add(globe);
+  scene.add(structureGroup);
+
+  // ---------------- mesh builders ----------------
+  function buildStructureMesh(def){
+    const h = def.hMin + Math.random()*(def.hMax-def.hMin);
+    const r = def.rMin + Math.random()*(def.rMax-def.rMin);
+    let geo;
+    if(def.shape === 'cone') geo = new THREE.ConeGeometry(r, h, 7);
+    else if(def.shape === 'cylinder') geo = new THREE.CylinderGeometry(r*0.5, r*0.5, h, 8);
+    else geo = new THREE.BoxGeometry(r*1.5, h, r*1.5);
+    const mat = new THREE.MeshStandardMaterial({ color: def.color, roughness:0.75 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.userData.height = h;
+    return mesh;
   }
 
-  // ---------------- ripple generator ----------------
-  function generateRipples(character, originIdx){
-    const ripples = {};
-    for(let i=originIdx+1; i<ERAS.length; i++){
-      const era = ERAS[i];
-      const traitPhrase = character.traits.length ? character.traits.join(', ').toLowerCase() + ' ' : '';
-      const text = `${character.name}'s ripple reaches the ${era.name}: ${pick(RIPPLE_OUTCOMES)}`;
-      ripples[era.id] = text;
+  function buildCreatureGroup(kind, color){
+    const g = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({ color, roughness:0.7 });
+    if(kind === 'dinosaur'){
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.16,0.16), mat);
+      body.position.y = 0.1;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8), mat);
+      head.position.set(0.22,0.16,0);
+      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.07,0.26,6), mat);
+      tail.rotation.z = Math.PI/2;
+      tail.position.set(-0.28,0.1,0);
+      g.add(body,head,tail);
+    } else if(kind === 'human' || kind === 'villager'){
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.05,0.16,6), mat);
+      body.position.y = 0.09;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.045,8,8), mat);
+      head.position.y = 0.2;
+      g.add(body,head);
+    } else if(kind === 'mammoth'){
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.2,0.2), mat);
+      body.position.y = 0.13;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.11,8,8), mat);
+      head.position.set(0.2,0.18,0);
+      g.add(body,head);
+    } else if(kind === 'hunter' || kind === 'warrior' || kind === 'soldier'){
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.05,0.16,6), mat);
+      body.position.y = 0.09;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.045,8,8), mat);
+      head.position.y = 0.2;
+      const spear = new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,0.24,4), mat);
+      spear.position.set(0.06,0.14,0);
+      spear.rotation.z = -0.3;
+      g.add(body,head,spear);
+    } else { // armored unit / military
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.09,0.13), mat);
+      body.position.y = 0.06;
+      const turret = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.05,0.08), mat);
+      turret.position.set(0,0.11,0);
+      g.add(body,turret);
     }
-    return ripples;
+    return g;
   }
 
-  // ---------------- render ----------------
-  const erasContainer = document.getElementById('eras');
-  const navContainer = document.getElementById('nav');
+  function placeOnSurface(obj, lat, lon, height){
+    const surface = latLonToVector3(lat, lon, R);
+    const normal = surface.clone().normalize();
+    obj.position.copy(surface.clone().add(normal.clone().multiplyScalar((height||0)/2)));
+    orientToNormal(obj, normal);
+  }
 
-  ERAS.forEach((era) => {
-    // nav dot
-    const dot = document.createElement('button');
-    dot.className = 'nav-dot';
-    dot.title = era.name;
-    dot.addEventListener('click', () => document.getElementById('era-'+era.id).scrollIntoView({behavior:'smooth'}));
-    navContainer.appendChild(dot);
-
-    // section
-    const section = document.createElement('section');
-    section.className = 'era';
-    section.id = 'era-' + era.id;
-    section.style.setProperty('--accent', era.accent);
-    section.dataset.move = era.move;
-    section.innerHTML = `
-      <canvas></canvas>
-      <div class="era-content">
-        <div class="era-eyebrow">${era.range}</div>
-        <h2>${era.name}</h2>
-        <p class="summary">${era.summary}</p>
-        <button class="add-btn" data-era="${era.id}">+ Add a Character</button>
-        <div class="char-gallery" id="gallery-${era.id}"></div>
-        <div class="ripple-box" id="ripple-${era.id}" style="display:none;">
-          <div class="rb-label">✨ Imagined ripple, from characters added earlier</div>
-          <div id="ripple-list-${era.id}"></div>
-        </div>
-      </div>
-    `;
-    erasContainer.appendChild(section);
-  });
-
-  function renderEra(eraId){
-    const gallery = document.getElementById('gallery-'+eraId);
-    gallery.innerHTML = (store[eraId]||[]).map(c => `
-      <div class="char-card">
-        ${c.svg}
-        <div><div class="name">${c.name}</div><div class="traits">${c.diet} · ${c.size}${c.traits.length ? ' · '+c.traits.join(', ') : ''}</div></div>
-      </div>`).join('');
-
-    // gather ripples targeting this era from all characters in earlier eras
-    let lines = [];
-    ERAS.forEach(e => {
-      (store[e.id]||[]).forEach(c => {
-        if(c.ripples && c.ripples[eraId]){
-          lines.push({ svg:c.svg, text:c.ripples[eraId] });
-        }
-      });
+  function disposeObject(obj){
+    obj.traverse(o => {
+      if(o.geometry) o.geometry.dispose();
+      if(o.material) o.material.dispose();
     });
-    const box = document.getElementById('ripple-'+eraId);
-    const list = document.getElementById('ripple-list-'+eraId);
-    if(lines.length){
-      box.style.display = 'block';
-      list.innerHTML = lines.map(l => `<div class="ripple-line">${l.svg}<div>${l.text}</div></div>`).join('');
-    } else {
-      box.style.display = 'none';
+  }
+
+  // ---------------- era population ----------------
+  function clearGroup(group){
+    while(group.children.length){
+      const c = group.children.pop();
+      disposeObject(c);
     }
   }
-  ERAS.forEach(e => renderEra(e.id));
 
-  // ---------------- modal ----------------
-  const overlay = document.getElementById('modalOverlay');
-  let targetEra = null;
+  function populateEra(idx){
+    const era = ERAS[idx];
+    clearGroup(structureGroup);
+    ambientCreatures.forEach(c => scene.remove(c.group));
+    ambientCreatures = [];
 
-  function wirePills(rowId, multi, max){
-    const row = document.getElementById(rowId);
-    row.querySelectorAll('.pill').forEach(p => {
-      p.addEventListener('click', () => {
-        if(multi){
-          const activeCount = row.querySelectorAll('.pill.active').length;
-          if(!p.classList.contains('active') && activeCount >= max) return;
-          p.classList.toggle('active');
+    era.structures.forEach(def => {
+      for(let i=0;i<def.count;i++){
+        const mesh = buildStructureMesh(def);
+        placeOnSurface(mesh, randLat(), randLon(), mesh.userData.height);
+        structureGroup.add(mesh);
+      }
+    });
+
+    const ambientKind = idx===0 ? 'dinosaur' : idx===1 ? 'mammoth' : idx<=3 ? 'villager' : 'villager';
+    const ambientColor = idx===0 ? 0x7A9A4E : idx===1 ? 0x8B7355 : 0xD9B48F;
+    for(let i=0;i<era.ambientCount;i++){
+      spawnAmbient(ambientKind, ambientColor, randLat(), randLon());
+    }
+
+    globeMat.color.setHex(era.color);
+    document.getElementById('eraName').textContent = era.name;
+    document.getElementById('eraTag').textContent = era.tag;
+    document.getElementById('eraYears').textContent = era.years;
+    document.querySelectorAll('.era-tick').forEach((el,i) => el.classList.toggle('active', i===idx));
+  }
+
+  function spawnAmbient(kind, color, lat, lon){
+    const group = buildCreatureGroup(kind, color);
+    placeOnSurface(group, lat, lon, 0.16);
+    scene.add(group);
+    const entity = { id: 'a'+(idCounter++), group, lat, lon, targetLat: lat, targetLon: lon, speed: 3+Math.random()*2, kind, state:'wander' };
+    pickNewWanderTarget(entity);
+    ambientCreatures.push(entity);
+    return entity;
+  }
+  function pickNewWanderTarget(entity){
+    entity.targetLat = Math.max(-80, Math.min(80, entity.lat + (Math.random()-0.5)*24));
+    entity.targetLon = entity.lon + (Math.random()-0.5)*24;
+  }
+
+  // ---------------- toasts ----------------
+  function toast(text){
+    const stack = document.getElementById('toastStack');
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = text;
+    stack.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => { el.classList.remove('show'); setTimeout(()=>el.remove(), 400); }, 4200);
+  }
+
+  // ---------------- particle burst ----------------
+  let bursts = [];
+  function spawnBurst(position, color){
+    const group = new THREE.Group();
+    const parts = [];
+    for(let i=0;i<16;i++){
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.035,4,4), new THREE.MeshBasicMaterial({ color }));
+      mesh.position.copy(position);
+      const dir = new THREE.Vector3((Math.random()-0.5),(Math.random()-0.5),(Math.random()-0.5)).normalize();
+      parts.push({ mesh, vel: dir.multiplyScalar(0.03+Math.random()*0.04), life:1 });
+      group.add(mesh);
+    }
+    scene.add(group);
+    bursts.push({ group, parts });
+  }
+  function updateBursts(){
+    for(let i=bursts.length-1;i>=0;i--){
+      const b = bursts[i];
+      let alive = false;
+      b.parts.forEach(p => {
+        p.mesh.position.add(p.vel);
+        p.life -= 0.025;
+        p.mesh.material.opacity = Math.max(0,p.life);
+        p.mesh.material.transparent = true;
+        if(p.life > 0) alive = true;
+      });
+      if(!alive){ disposeObject(b.group); scene.remove(b.group); bursts.splice(i,1); }
+    }
+  }
+
+  // ---------------- spawn logic ----------------
+  function spawnEntity(kind, lat, lon){
+    const era = ERAS[currentEraIdx];
+    const color = kind==='human' ? 0xE0B98C : 0x7A9A4E;
+    const group = buildCreatureGroup(kind, color);
+    placeOnSurface(group, lat, lon, 0.16);
+    scene.add(group);
+    const entity = { id:'e'+(idCounter++), group, lat, lon, kind, targetLat:lat, targetLon:lon, speed:4, state:'idle' };
+    activeEntities.push(entity);
+
+    if(kind === 'human'){
+      if(era.id === 0){
+        const predator = ambientCreatures.find(c => c.kind==='dinosaur');
+        if(predator){
+          predator.state = 'hunting';
+          predator.targetLat = lat; predator.targetLon = lon;
+          predator.huntTargetId = entity.id;
+          setTimeout(() => {
+            const stillThere = activeEntities.find(e => e.id === entity.id);
+            if(stillThere){
+              scene.remove(stillThere.group); disposeObject(stillThere.group);
+              activeEntities = activeEntities.filter(e => e.id !== entity.id);
+              spawnBurst(latLonToVector3(lat,lon,R), 0xFF3B30);
+              toast('🦖 A predator caught your human!');
+            }
+            predator.state = 'wander';
+            pickNewWanderTarget(predator);
+          }, 2200);
         } else {
-          row.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
-          p.classList.add('active');
+          toast('🧍 Human settled — no predators nearby right now.');
         }
-      });
-    });
-  }
-  wirePills('dietRow', false);
-  wirePills('sizeRow', false);
-  wirePills('traitRow', true, 3);
-
-  document.querySelectorAll('.add-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      targetEra = btn.dataset.era;
-      const era = ERAS.find(e => e.id === targetEra);
-      document.getElementById('modalEraName').textContent = 'Add a Character — ' + era.name;
-      document.getElementById('charName').value = '';
-      document.querySelectorAll('#dietRow .pill').forEach((p,i) => p.classList.toggle('active', i===0));
-      document.querySelectorAll('#sizeRow .pill').forEach((p,i) => p.classList.toggle('active', i===1));
-      document.querySelectorAll('#traitRow .pill').forEach(p => p.classList.remove('active'));
-      overlay.classList.add('show');
-    });
-  });
-  document.getElementById('cancelBtn').addEventListener('click', () => overlay.classList.remove('show'));
-  overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.classList.remove('show'); });
-
-  document.getElementById('createBtn').addEventListener('click', () => {
-    const name = document.getElementById('charName').value.trim();
-    if(!name){ document.getElementById('charName').focus(); return; }
-    const diet = document.querySelector('#dietRow .pill.active').dataset.val;
-    const size = document.querySelector('#sizeRow .pill.active').dataset.val;
-    const traits = Array.from(document.querySelectorAll('#traitRow .pill.active')).map(p => p.dataset.val);
-
-    const originIdx = ERAS.findIndex(e => e.id === targetEra);
-    const character = {
-      id: 'c' + Date.now(),
-      name, diet, size, traits,
-      svg: creatureSVG(diet, size, traits)
-    };
-    character.ripples = generateRipples(character, originIdx);
-
-    store[targetEra].push(character);
-    saveData(store);
-    renderEra(targetEra);
-    ERAS.slice(originIdx+1).forEach(e => renderEra(e.id));
-
-    overlay.classList.remove('show');
-  });
-
-  document.getElementById('resetBtn').addEventListener('click', () => {
-    if(!confirm('Clear every character you\'ve added? This cannot be undone.')) return;
-    store = {}; ERAS.forEach(e => store[e.id] = []);
-    saveData(store);
-    ERAS.forEach(e => renderEra(e.id));
-  });
-
-  // ---------------- scroll reveal + nav sync ----------------
-  const sections = document.querySelectorAll('.era');
-  const navDots = document.querySelectorAll('.nav-dot');
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const idx = Array.from(sections).indexOf(entry.target);
-      if(entry.isIntersecting){
-        entry.target.classList.add('in');
-        navDots.forEach((d,i) => d.classList.toggle('active', i===idx));
-        activateCanvas(entry.target);
       } else {
-        deactivateCanvas(entry.target);
+        toast('🧍 Human settled safely into this era.');
       }
-    });
-  }, { threshold:0.35 });
-  sections.forEach(s => io.observe(s));
-
-  // ---------------- ambient canvas backgrounds ----------------
-  const canvasState = new Map();
-
-  function initParticles(section){
-    const canvas = section.querySelector('canvas');
-    const ctx = canvas.getContext('2d');
-    const move = section.dataset.move;
-    const accent = getComputedStyle(section).getPropertyValue('--accent').trim();
-
-    function resize(){
-      canvas.width = section.offsetWidth;
-      canvas.height = section.offsetHeight;
-    }
-    resize();
-
-    const count = move === 'meteor' ? 50 : (move === 'swim' ? 14 : 55);
-    const particles = [];
-    for(let i=0;i<count;i++){
-      particles.push({
-        x: Math.random()*canvas.width,
-        y: Math.random()*canvas.height,
-        r: 1 + Math.random()*2.6,
-        speed: 0.3 + Math.random()*0.9,
-        phase: Math.random()*Math.PI*2,
-        drift: (Math.random()-0.5)*0.4
-      });
-    }
-    let meteorTimer = 0, meteor = null;
-
-    canvasState.set(section, { canvas, ctx, particles, move, accent, resize, active:false, raf:null, meteorTimer, meteor });
-    window.addEventListener('resize', resize);
-  }
-
-  function drawFrame(state){
-    const { ctx, canvas, particles, move, accent } = state;
-    ctx.clearRect(0,0,canvas.width, canvas.height);
-    const t = performance.now()/1000;
-
-    particles.forEach(p => {
-      if(move === 'rise' || move === 'ember'){
-        p.y -= p.speed * (move==='ember' ? 1.4 : 0.8);
-        p.x += Math.sin(t + p.phase) * 0.4;
-        if(p.y < -10){ p.y = canvas.height+10; p.x = Math.random()*canvas.width; }
-      } else if(move === 'fall'){
-        p.y += p.speed;
-        p.x += Math.sin(t + p.phase) * 0.4;
-        if(p.y > canvas.height+10){ p.y = -10; p.x = Math.random()*canvas.width; }
-      } else if(move === 'swim'){
-        p.x += p.drift + 0.15;
-        p.y += Math.sin(t*0.6 + p.phase) * 0.3;
-        if(p.x > canvas.width+20) p.x = -20;
-        if(p.x < -20) p.x = canvas.width+20;
-      } else if(move === 'twinkle' || move === 'meteor'){
-        // static position, alpha handled at draw
-      }
-    });
-
-    ctx.fillStyle = accent;
-    particles.forEach(p => {
-      let alpha = 0.55;
-      if(move === 'ember') alpha = 0.4 + Math.sin(t*3+p.phase)*0.3;
-      if(move === 'twinkle' || move === 'meteor') alpha = 0.3 + Math.sin(t*1.5+p.phase)*0.3;
-      ctx.globalAlpha = Math.max(0, alpha);
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-      ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-
-    if(move === 'meteor'){
-      state.meteorTimer -= 1/60;
-      if(state.meteorTimer <= 0 && !state.meteor){
-        state.meteor = { x: canvas.width*0.15, y: -20, vx: canvas.width*0.006, vy: canvas.height*0.01, life:1 };
-      }
-      if(state.meteor){
-        const m = state.meteor;
-        ctx.strokeStyle = '#FFD166';
-        ctx.lineWidth = 2.4;
-        ctx.globalAlpha = m.life;
-        ctx.beginPath();
-        ctx.moveTo(m.x, m.y);
-        ctx.lineTo(m.x - m.vx*4, m.y - m.vy*4);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-        m.x += m.vx; m.y += m.vy; m.life -= 0.012;
-        if(m.y > canvas.height+20 || m.life <= 0){
-          state.meteor = null;
-          state.meteorTimer = 4 + Math.random()*4;
+    } else if(kind === 'dinosaur'){
+      if(era.id === 0){
+        entity.state = 'wander';
+        ambientCreatures.push(entity);
+        activeEntities = activeEntities.filter(e => e.id !== entity.id);
+        pickNewWanderTarget(entity);
+        toast("🦕 The dinosaur roams freely — it's right at home here.");
+      } else {
+        const style = DEFENDER_STYLE[era.defenseLevel];
+        toast(`⚠️ A dinosaur appeared! ${era.name}'s ${style.label} are mobilizing…`);
+        const defenders = [];
+        for(let i=0;i<3;i++){
+          const dLat = lat + (Math.random()-0.5)*14;
+          const dLon = lon + (Math.random()-0.5)*14;
+          const dGroup = buildCreatureGroup(style.label.includes('hunter')?'hunter':style.label.includes('warrior')?'warrior':style.label.includes('soldier')?'soldier':'military', style.color);
+          placeOnSurface(dGroup, dLat, dLon, 0.16);
+          scene.add(dGroup);
+          const dEntity = { id:'d'+(idCounter++), group:dGroup, lat:dLat, lon:dLon, targetLat:lat, targetLon:lon, speed:6, state:'converging' };
+          defenders.push(dEntity);
+          ambientCreatures.push(dEntity);
         }
+        setTimeout(() => {
+          const success = Math.random() < era.successChance;
+          const pos = latLonToVector3(entity.lat, entity.lon, R);
+          if(success){
+            spawnBurst(pos, 0xFF9800);
+            scene.remove(entity.group); disposeObject(entity.group);
+            activeEntities = activeEntities.filter(e => e.id !== entity.id);
+            toast(SUCCESS_MESSAGES[era.defenseLevel]);
+          } else {
+            entity.state = 'wander';
+            pickNewWanderTarget(entity);
+            toast(FAIL_MESSAGES[era.defenseLevel]);
+          }
+          defenders.forEach(d => {
+            ambientCreatures = ambientCreatures.filter(c => c.id !== d.id);
+            scene.remove(d.group); disposeObject(d.group);
+          });
+        }, 2500);
       }
     }
   }
 
-  function loopFor(section){
-    const state = canvasState.get(section);
-    if(!state || !state.active) return;
-    drawFrame(state);
-    state.raf = requestAnimationFrame(() => loopFor(section));
+  // ---------------- update loop for wandering/hunting/converging entities ----------------
+  function updateCreatures(dt){
+    ambientCreatures.forEach(c => {
+      const dLat = c.targetLat - c.lat, dLon = c.targetLon - c.lon;
+      const dist = Math.hypot(dLat,dLon);
+      if(dist > 0.3){
+        const step = Math.min(dist, c.speed*dt);
+        c.lat += (dLat/dist)*step;
+        c.lon += (dLon/dist)*step;
+        placeOnSurface(c.group, c.lat, c.lon, 0.16);
+      } else if(c.state === 'wander'){
+        pickNewWanderTarget(c);
+      }
+    });
+    activeEntities.forEach(e => {
+      placeOnSurface(e.group, e.lat, e.lon, 0.16);
+    });
   }
 
-  function activateCanvas(section){
-    if(!canvasState.has(section)) initParticles(section);
-    const state = canvasState.get(section);
-    if(state.active) return;
-    state.active = true;
-    loopFor(section);
-  }
-  function deactivateCanvas(section){
-    const state = canvasState.get(section);
-    if(!state) return;
-    state.active = false;
-    if(state.raf) cancelAnimationFrame(state.raf);
-  }
+  // ---------------- interaction: tap-to-place ----------------
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  let downInfo = null;
 
-  // ---------------- intro ----------------
-  document.getElementById('beginBtn').addEventListener('click', () => {
-    const intro = document.getElementById('intro');
-    intro.style.opacity = '0';
-    setTimeout(() => intro.remove(), 900);
+  function onDown(e){
+    const t = e.touches ? e.touches[0] : e;
+    downInfo = { x:t.clientX, y:t.clientY, time:Date.now() };
+  }
+  function onUp(e){
+    if(!downInfo) return;
+    const t = e.changedTouches ? e.changedTouches[0] : e;
+    const dx = t.clientX-downInfo.x, dy = t.clientY-downInfo.y;
+    const dist = Math.hypot(dx,dy);
+    const dt = Date.now()-downInfo.time;
+    downInfo = null;
+    if(dist>10||dt>350||!spawnMode) return;
+
+    pointer.x = (t.clientX/window.innerWidth)*2-1;
+    pointer.y = -(t.clientY/window.innerHeight)*2+1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObject(globe);
+    if(hits.length === 0) return;
+    const { lat, lon } = vector3ToLatLon(hits[0].point);
+    spawnEntity(spawnMode, lat, lon);
+    setSpawnMode(null);
+  }
+  renderer.domElement.addEventListener('pointerdown', onDown);
+  renderer.domElement.addEventListener('pointerup', onUp);
+
+  function setSpawnMode(mode){
+    spawnMode = mode;
+    document.getElementById('spawnHumanBtn').classList.toggle('active', mode==='human');
+    document.getElementById('spawnDinoBtn').classList.toggle('active', mode==='dinosaur');
+    document.getElementById('placementHint').style.opacity = mode ? '1' : '0';
+  }
+  document.getElementById('spawnHumanBtn').addEventListener('click', () => setSpawnMode(spawnMode==='human' ? null : 'human'));
+  document.getElementById('spawnDinoBtn').addEventListener('click', () => setSpawnMode(spawnMode==='dinosaur' ? null : 'dinosaur'));
+
+  // ---------------- timeline ----------------
+  const ticksEl = document.getElementById('eraTicks');
+  ERAS.forEach((era,i) => {
+    const tick = document.createElement('div');
+    tick.className = 'era-tick' + (i===0?' active':'');
+    tick.textContent = era.name;
+    tick.addEventListener('click', () => { document.getElementById('timeline').value = i; changeEra(i); });
+    ticksEl.appendChild(tick);
+  });
+  function changeEra(idx){
+    if(idx === currentEraIdx) return;
+    currentEraIdx = idx;
+    populateEra(idx);
+    activeEntities.forEach(e => { scene.remove(e.group); disposeObject(e.group); });
+    activeEntities = [];
+  }
+  document.getElementById('timeline').addEventListener('input', (e) => changeEra(parseInt(e.target.value)));
+
+  // ---------------- resize ----------------
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // ---------------- init & loop ----------------
+  populateEra(0);
+  let lastTime = performance.now();
+  function animate(now){
+    requestAnimationFrame(animate);
+    const dt = Math.min(0.05, (now-lastTime)/1000);
+    lastTime = now;
+    controls.update();
+    updateCreatures(dt);
+    updateBursts();
+    renderer.render(scene, camera);
+  }
+  animate(performance.now());
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    const boot = document.getElementById('boot');
+    boot.style.opacity = '0';
+    setTimeout(() => boot.remove(), 800);
   });
 })();
 </script>
